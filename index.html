@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Puretao V23 - Professional Role</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --gold: #D4AF37; --dark: #2D1400; --cream: #FAF7F2; --white: #FFFFFF; --border: #E8D5C4; --secondary: #8B4513; --success: #28a745; --pending: #ffc107; --danger: #dc3545; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Noto Sans Thai', sans-serif; background: var(--cream); color: var(--dark); overflow-x: hidden; touch-action: manipulation; }
+        .app { max-width: 500px; margin: 0 auto; min-height: 100vh; background: var(--cream); display: flex; flex-direction: column; position: relative; box-shadow: 0 0 30px rgba(0,0,0,0.05); }
+
+        .main-header { background: var(--white); padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; z-index: 110; position: relative; }
+        .logo-img { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--gold); object-fit: cover; }
+        .shop-info { flex: 1; }
+        .shop-info h2 { font-size: 17px; margin: 0; font-weight: 700; }
+        .shop-info p { font-size: 11px; color: #888; }
+        .header-logout { font-size: 11px; color: var(--danger); font-weight: 700; border: 1px solid #ffcccc; padding: 4px 8px; border-radius: 8px; background: #fff5f5; cursor: pointer; }
+        
+        .nav-tabs { display: flex; background: var(--white); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; height: 55px; }
+        .tab-btn { flex: 1; border: none; background: none; font-size: 10px; font-weight: 600; color: #999; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .tab-btn.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+        .tab-btn span { font-size: 18px; margin-bottom: 2px; }
+
+        .page { display: none; padding-bottom: 100px; animation: fadeIn 0.2s; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--white); margin: 8px; border-radius: 15px; padding: 12px; border: 1px solid var(--border); }
+        .btn-main { background: var(--dark); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 700; font-size: 15px; cursor: pointer; }
+        .btn-main:disabled { background: #ccc; cursor: not-allowed; }
+        
+        input[type="text"], input[type="number"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; font-size: 16px; font-family: inherit; }
+
+        .topping-container { margin-top: 10px; padding: 8px; background: #fdfaf5; border-radius: 10px; border: 1px solid #f0e6d6; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+        .topping-item { display: flex; align-items: center; font-size: 11px; color: #444; background: #fff; padding: 6px; border-radius: 8px; border: 1px solid #eee; cursor: pointer; }
+        .topping-item:active { background: #f0f0f0; }
+        .topping-left { display: flex; align-items: center; gap: 8px; width: 100%; pointer-events: none; }
+        .topping-left input { pointer-events: auto; }
+        .topping-price { color: var(--gold); font-weight: 700; margin-left: auto; }
+        .topping-img { width: 24px; height: 24px; border-radius: 4px; object-fit: cover; flex-shrink: 0; pointer-events: auto; }
+        input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--gold); flex-shrink: 0; }
+
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+        .dash-item { background: var(--white); padding: 8px 4px; border-radius: 10px; border: 1px solid var(--border); text-align: center; }
+        .dash-val { font-size: 14px; font-weight: 700; color: var(--secondary); }
+        .dash-item small { font-size: 9px; color: #666; }
+
+        .status-badge { font-size: 9px; padding: 2px 6px; border-radius: 8px; color: white; }
+        .bg-pending { background: var(--pending); }
+        .bg-success { background: var(--success); }
+        .bg-danger { background: var(--danger); }
+
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1500; align-items:center; justify-content:center; }
+        .modal-content { background: white; border-radius: 20px; padding: 20px; width: 92%; max-height: 85vh; overflow-y: auto; }
+        
+        #id-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--cream); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px; }
+        #cloud-status { position: fixed; top: 2px; right: 5px; font-size: 8px; color: #bbb; z-index: 2100; pointer-events: none; }
+        
+        .topping-edit-item { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 8px; border-radius: 8px; margin-bottom: 4px; font-size: 12px; border: 1px solid #eee; }
+        .topping-preview-img { width: 30px; height: 30px; border-radius: 4px; object-fit: cover; margin-right: 8px; border: 1px solid #ddd; }
+        
+        .qty-btn { border:none; background:none; font-size:24px; color:var(--gold); font-weight:bold; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div id="cloud-status">Sync: Standby</div>
+
+<div class="app">
+    <div id="id-overlay">
+        <div style="background:var(--white); padding:30px 20px; border-radius:25px; text-align:center; width:100%; border:1px solid var(--border); box-shadow:0 10px 25px rgba(0,0,0,0.05);">
+            <div style="position: relative; display: inline-block;">
+                <img id="landing-logo" src="https://via.placeholder.com/80" style="width:80px; height:80px; border-radius:50%; border:2px solid var(--gold); margin-bottom:15px; object-fit:cover;">
+                <button onclick="enterAsStaffOrAdmin()" style="position: absolute; bottom: 15px; right: -10px; background:white; border:1px solid #ddd; border-radius:50%; width:30px; height:30px; font-size:14px; box-shadow:0 2px 5px rgba(0,0,0,0.1);">⚙️</button>
+            </div>
+            <h1 id="landing-shop-name" style="color:var(--gold); margin-bottom:5px; font-size:24px;">PureTao</h1>
+            <p id="landing-shop-sub" style="font-size:13px; color:#999; margin-bottom:20px;">ยินดีต้อนรับสู่ระบบสั่งอาหาร</p>
+            <input type="text" id="input-username" placeholder="ระบุชื่อของคุณ..." autofocus>
+            <button id="btn-start" class="btn-main" onclick="enterAsCustomer()" style="background:var(--gold);" disabled>กำลังโหลดระบบ...</button>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <img id="ui-logo" src="https://via.placeholder.com/80" class="logo-img">
+        <div class="shop-info">
+            <h2 id="ui-name">PureTao</h2>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <p id="ui-sub">สดใหม่เพื่อสุขภาพ</p>
+                <div id="role-badge" style="display:none; font-size:9px; background:var(--dark); color:white; padding:2px 6px; border-radius:6px;">ROLE</div>
+            </div>
+        </div>
+        <button class="header-logout" id="btn-logout-main" style="display:none;" onclick="logout()">ออกจากระบบ</button>
+    </header>
+
+    <div class="nav-tabs">
+        <button class="tab-btn active" id="t-order" onclick="navTo('order-page')"><span>🥛</span>เมนู</button>
+        <button class="tab-btn" id="t-history" onclick="navTo('history-page')"><span>📜</span>ออเดอร์</button>
+        <button class="tab-btn" id="t-manage" style="display:none;" onclick="navTo('manage-page')"><span>⚙️</span>จัดการ</button>
+    </div>
+
+    <div id="order-page" class="page active">
+        <div style="padding:10px 15px; font-size:12px; background:white; border-bottom:1px solid #eee; color:#666;">
+            ยินดีต้อนรับคุณ <b class="customer-name-label" style="color:var(--secondary);"></b> Puretao ยินดีต้อนรับ
+        </div>
+        <div id="menu-container"></div>
+        <div style="position:fixed; bottom:0; width:100%; max-width:500px; padding:12px; background:rgba(250,247,242,0.95); backdrop-filter:blur(10px); z-index:90; border-top:1px solid var(--border);">
+            <button class="btn-main" id="btn-submit" onclick="placeOrder()" disabled>กรุณาเลือกเมนู - ฿0</button>
+        </div>
+    </div>
+
+    <div id="history-page" class="page">
+        <div style="padding:15px;">
+            <h2 style="font-size:18px;">รายการออเดอร์</h2>
+            <p id="date-display" style="font-size:11px; color:#999; margin-bottom:12px;"></p>
+            
+            <div id="admin-dashboard" class="dashboard" style="display:none;">
+                <div class="dash-item"><small>ยอดขายวันนี้</small><br><span class="dash-val" id="today-sales">฿0</span></div>
+                <div class="dash-item"><small>ออเดอร์</small><br><span class="dash-val" id="today-count">0</span></div>
+                <div class="dash-item" style="border-color: var(--danger);"><small>ยกเลิก</small><br><span class="dash-val" id="today-cancel" style="color: var(--danger);">0</span></div>
+            </div>
+
+            <div id="user-total-info" style="margin-bottom:12px; padding:10px; background:var(--white); border-radius:12px; border-left:4px solid var(--gold); display:none;">
+                <small>ยอดสั่งรวมทั้งหมดของคุณ:</small>
+                <div class="dash-val" id="user-grand-total">฿0</div>
+            </div>
+        </div>
+        <div id="orders-list-ui" style="padding:0 8px;"></div>
+    </div>
+
+    <div id="manage-page" class="page">
+        <div style="padding:20px;"><h2>จัดการหลังบ้าน</h2></div>
+        <div style="padding:0 15px;">
+            <div class="card" style="margin:0 0 15px 0; border-style:solid; border-color:var(--gold); background: #fffcf5;">
+                <h4 style="margin-bottom:10px; font-size:14px;">ตั้งค่าข้อมูลร้าน</h4>
+                <button class="btn-main" style="background:var(--secondary); padding:10px; font-size:13px;" onclick="openShopEditModal()">✏️ แก้ไขชื่อ/รูป/รายละเอียดร้าน</button>
+            </div>
+
+            <div class="card" style="margin:0 0 15px 0; border-style:dashed; border-color:var(--gold);">
+                <button class="btn-main" style="background:var(--gold);" onclick="openAddMenuModal()">+ เพิ่มเมนูใหม่</button>
+            </div>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px;">
+                <button class="btn-main" style="background:#666; font-size:13px;" onclick="exportData()">📥 Backup</button>
+                <button class="btn-main" style="background:#666; font-size:13px;" onclick="document.getElementById('import-f').click()">📤 Import</button>
+            </div>
+            <input type="file" id="import-f" style="display:none" onchange="importData(this)">
+            <button class="btn-main" style="background:var(--danger); margin-bottom:10px;" onclick="clearAllOrders()">🗑️ ล้างออเดอร์ทั้งหมด</button>
+        </div>
+    </div>
+
+    <!-- Modal จัดการเมนู -->
+    <div id="admin-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="modal-title" style="margin-bottom:15px;">จัดการเมนู</h3>
+            <input type="hidden" id="edit-menu-id">
+            <input type="text" id="m-name" placeholder="ชื่อเมนู">
+            <input type="number" id="m-price" placeholder="ราคา">
+            <div style="margin-bottom:15px;">
+                <label style="font-size:11px; display:block; margin-bottom:5px;">รูปภาพเมนู:</label>
+                <input type="file" accept="image/*" onchange="encodeImg(this, 'menu')" style="font-size:11px;">
+            </div>
+            <div style="background:#f9f9f9; padding:12px; border-radius:12px; margin-bottom:15px; border:1px solid #eee;">
+                <b style="font-size:12px;">จัดการท็อปปิ้ง</b>
+                <div id="opt-list-edit" style="margin-top:10px; margin-bottom:10px;"></div>
+                <div style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 5px;">
+                    <input type="text" id="o-name" placeholder="ชื่อท็อปปิ้งใหม่">
+                    <input type="number" id="o-price" placeholder="ราคาเพิ่ม (+)">
+                    <input type="file" id="o-img-input" accept="image/*" onchange="encodeImg(this, 'opt')" style="font-size:11px; margin-bottom:8px;">
+                    <button onclick="addOptToTemp()" style="width:100%; padding:8px; font-size:12px; background:#ddd; border:none; border-radius:8px;">+ เพิ่มท็อปปิ้ง</button>
+                </div>
+            </div>
+            <button class="btn-main" onclick="saveMenu()" style="background:var(--gold);">บันทึกข้อมูลเมนู</button>
+            <button onclick="closeModal('admin-modal')" style="width:100%; margin-top:15px; border:none; background:none; color:#999; font-size:13px;">ยกเลิก</button>
+        </div>
+    </div>
+
+    <!-- Modal แก้ไขข้อมูลร้าน -->
+    <div id="shop-edit-modal" class="modal">
+        <div class="modal-content">
+            <h3>แก้ไขข้อมูลร้าน</h3>
+            <div style="margin:15px 0;">
+                <label style="font-size:11px;">ชื่อร้าน:</label>
+                <input type="text" id="edit-shop-name">
+                <label style="font-size:11px;">รายละเอียดร้าน:</label>
+                <textarea id="edit-shop-sub" rows="2"></textarea>
+                <label style="font-size:11px;">โลโก้ร้าน:</label>
+                <input type="file" accept="image/*" onchange="encodeImg(this, 'logo')" style="font-size:11px;">
+            </div>
+            <button class="btn-main" onclick="saveShopInfo()" style="background:var(--gold);">บันทึกข้อมูลร้าน</button>
+            <button onclick="closeModal('shop-edit-modal')" style="width:100%; margin-top:15px; border:none; background:none; color:#999;">ยกเลิก</button>
+        </div>
+    </div>
+
+    <div id="zoom-modal" class="modal" onclick="this.style.display='none'">
+        <img id="zoom-img" src="" style="max-width:90%; border-radius:15px; border:3px solid white;">
+    </div>
+</div>
+
+<script>
+    const DB_URL = "https://puretao-shop-fe6e4-default-rtdb.asia-southeast1.firebasedatabase.app/db.json";
+    let db = { shop: {name:"PureTao", sub:"สดใหม่เพื่อสุขภาพ", logo:""}, menus: [], orders: [] };
+    let cart = {}; let user = ""; let userId = ""; 
+    let isAdmin = false; let isStaff = false; 
+    let tempMImg = ""; let tempOImg = ""; let tempLogoImg = ""; let tempOpts = [];
+    let isInitialLoadDone = false;
+
+    window.onload = async () => {
+        userId = localStorage.getItem('puretao_user_id') || ("ID-" + Date.now());
+        localStorage.setItem('puretao_user_id', userId);
+        await loadDB();
+        isInitialLoadDone = true;
+
+        const savedUser = localStorage.getItem('puretao_user_name');
+        const sessionRole = sessionStorage.getItem('puretao_role');
+
+        if(sessionRole === 'admin') {
+            isAdmin = true; user = "เจ้าของร้าน";
+            document.getElementById('id-overlay').style.display = 'none';
+            enableRoleMode('เจ้าของร้าน');
+        } else if(sessionRole === 'staff') {
+            isStaff = true; user = "คนขาย";
+            document.getElementById('id-overlay').style.display = 'none';
+            enableRoleMode('คนขาย');
+        } else if(savedUser) {
+            user = savedUser;
+            document.getElementById('id-overlay').style.display = 'none';
+            document.getElementById('btn-logout-main').style.display = 'block';
+            updateUserLabels();
+        }
+
+        document.getElementById('btn-start').disabled = false;
+        document.getElementById('btn-start').textContent = "เริ่มสั่งอาหาร";
+        updateShopUI(); renderMenus();
+    };
+
+    async function loadDB() {
+        document.getElementById('cloud-status').textContent = "Sync: Loading...";
+        try {
+            const res = await fetch(DB_URL + "?t=" + Date.now());
+            const data = await res.json();
+            if(data) {
+                db = data;
+                if(!db.orders) db.orders = [];
+                if(!db.menus) db.menus = [];
+                if(!db.shop) db.shop = {name:"PureTao", sub:"สดใหม่เพื่อสุขภาพ", logo:""};
+                db.menus.sort((a, b) => (a.order || 0) - (b.order || 0));
+                document.getElementById('cloud-status').textContent = "Sync: Connected ✅";
+            }
+        } catch (e) {
+            document.getElementById('cloud-status').textContent = "Sync: Offline ⚠️";
+            const local = localStorage.getItem('puretao_v23_db');
+            if(local) db = JSON.parse(local);
+        }
+    }
+
+    async function saveDB() {
+        if(!isInitialLoadDone) return;
+        localStorage.setItem('puretao_v23_db', JSON.stringify(db));
+        document.getElementById('cloud-status').textContent = "Sync: Saving...";
+        try {
+            await fetch(DB_URL, { method: 'PUT', body: JSON.stringify(db) });
+            document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
+        } catch (e) {
+            document.getElementById('cloud-status').textContent = "Sync: Local Only 💾";
+        }
+    }
+
+    function renderMenus() {
+        const list = document.getElementById('menu-container');
+        if(!db.menus || db.menus.length === 0) { list.innerHTML = "<div style='text-align:center; padding:80px 20px; color:#bbb;'>ไม่มีรายการเมนู</div>"; return; }
+        
+        list.innerHTML = db.menus.map((m, index) => {
+            const c = cart[m.id] || { qty: 0, opts: [] };
+            return `
+            <div class="card">
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <img src="${m.img || 'https://via.placeholder.com/100'}" style="width:75px; height:75px; border-radius:12px; object-fit:cover;" onclick="zoom('${m.img}')">
+                    <div style="flex:1">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <b style="font-size:15px; line-height:1.2;">${m.name}</b>
+                            ${isAdmin ? `<div style="display:flex; gap:5px; align-items:center;">
+                                <span onclick="moveMenu(${index}, -1)" style="font-size:18px;">⬆️</span>
+                                <span onclick="moveMenu(${index}, 1)" style="font-size:18px;">⬇️</span>
+                                <span onclick="editMenu(${m.id})" style="color:#007bff; font-size:11px; font-weight:600; margin-left:5px;">แก้</span>
+                                <span onclick="delMenu(${m.id})" style="color:red; font-size:11px; font-weight:600;">ลบ</span>
+                            </div>` : ''}
+                        </div>
+                        <div style="color:var(--secondary); font-weight:700; font-size:17px; margin:2px 0;">฿${m.price}</div>
+                        <div style="display:flex; justify-content:flex-end;">
+                            <div style="display:flex; align-items:center; gap:10px; background:#F8F9FA; padding:2px 8px; border-radius:20px; border:1px solid #eee;">
+                                <button class="qty-btn" onclick="updateCartUI(${m.id},-1)">-</button>
+                                <b id="qty-${m.id}" style="font-size:16px; min-width:15px; text-align:center;">${c.qty}</b>
+                                <button class="qty-btn" onclick="updateCartUI(${m.id},1)">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${m.options && m.options.length > 0 ? `
+                <div class="topping-container">
+                    ${m.options.map(o => `
+                        <div class="topping-item" onclick="handleToppingClick(event, ${m.id}, '${o.name}')">
+                            <div class="topping-left">
+                                <input type="checkbox" id="opt-${m.id}-${o.name}" ${(c.opts.includes(o.name))?'checked':''} ${(c.qty==0)?'disabled':''}>
+                                ${o.img ? `<img src="${o.img}" class="topping-img" onclick="event.stopPropagation(); zoom('${o.img}')">` : ''}
+                                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:60px;">${o.name}</span>
+                                <span class="topping-price">฿${o.price}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    // ฟังก์ชันจัดการคลิก Topping (ป้องกันการเปลี่ยนค่าเมื่อกดเลข)
+    function handleToppingClick(event, mid, optName) {
+        // ถ้ากดโดน checkbox หรือ พื้นที่รอบๆ ให้ทำงาน
+        const cb = document.getElementById(`opt-${mid}-${optName}`);
+        if(cb.disabled) return;
+        if(event.target.tagName !== 'INPUT') {
+            cb.checked = !cb.checked;
+        }
+        toggleOpt(mid, optName);
+    }
+
+    async function moveMenu(index, direction) {
+        const newIndex = index + direction;
+        if (newIndex < 0 || newIndex >= db.menus.length) return;
+        const temp = db.menus[index];
+        db.menus[index] = db.menus[newIndex];
+        db.menus[newIndex] = temp;
+        db.menus.forEach((m, i) => m.order = i);
+        renderMenus();
+        await saveDB();
+    }
+
+    function updateCartUI(id, d) {
+        if(!cart[id]) cart[id] = { qty: 0, opts: [] };
+        cart[id].qty = Math.max(0, cart[id].qty + d);
+        if(cart[id].qty === 0) cart[id].opts = [];
+        document.getElementById(`qty-${id}`).textContent = cart[id].qty;
+        const checks = document.querySelectorAll(`input[id^="opt-${id}-"]`);
+        checks.forEach(ch => {
+            ch.disabled = cart[id].qty === 0;
+            if(cart[id].qty === 0) ch.checked = false;
+        });
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let total = 0;
+        db.menus.forEach(m => {
+            let c = cart[m.id];
+            if(c && c.qty > 0) {
+                let p = m.price;
+                if(m.options) m.options.forEach(o => { if(c.opts.includes(o.name)) p += o.price; });
+                total += (p * c.qty);
+            }
+        });
+        const btn = document.getElementById('btn-submit');
+        btn.disabled = total === 0;
+        btn.textContent = total === 0 ? "กรุณาเลือกเมนู" : `ยืนยันออเดอร์ - ฿${total}`;
+    }
+
+    function toggleOpt(mid, name) {
+        if(!cart[mid]) return;
+        let idx = cart[mid].opts.indexOf(name);
+        if(idx > -1) cart[mid].opts.splice(idx, 1); else cart[mid].opts.push(name);
+        calculateTotal();
+    }
+
+    async function placeOrder() {
+        let items = []; let total = 0;
+        db.menus.forEach(m => {
+            let c = cart[m.id];
+            if(c && c.qty > 0) {
+                let p = m.price;
+                let optStr = "";
+                if(m.options) m.options.forEach(o => { if(c.opts.includes(o.name)) { p += o.price; optStr += ` (+${o.name})`; }});
+                items.push(`${m.name}${optStr} x${c.qty}`);
+                total += (p * c.qty);
+            }
+        });
+        
+        let displayName = (isAdmin) ? "เจ้าของร้าน" : (isStaff) ? "คนขาย" : `ลูกค้า (${user})`;
+
+        db.orders.unshift({
+            id: Date.now(), uid: userId, user: displayName, items: items, total: total,
+            status: "รอดำเนินการ", time: new Date().toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}),
+            date: new Date().toLocaleDateString('th-TH'), timestamp: Date.now(),
+            staff_in_charge: (isAdmin || isStaff) ? user : "ลูกค้าสั่งเอง"
+        });
+        await saveDB(); cart = {}; calculateTotal(); alert('✅ ส่งออเดอร์แล้ว'); navTo('history-page');
+    }
+
+    function openShopEditModal() {
+        if(!isAdmin) return;
+        document.getElementById('edit-shop-name').value = db.shop.name;
+        document.getElementById('edit-shop-sub').value = db.shop.sub;
+        tempLogoImg = db.shop.logo || "";
+        document.getElementById('shop-edit-modal').style.display = 'flex';
+    }
+
+    async function saveShopInfo() {
+        const newName = document.getElementById('edit-shop-name').value.trim();
+        const newSub = document.getElementById('edit-shop-sub').value.trim();
+        if(!newName) return alert('กรุณาระบุชื่อร้าน');
+        
+        db.shop.name = newName;
+        db.shop.sub = newSub;
+        if(tempLogoImg) db.shop.logo = tempLogoImg;
+        
+        await saveDB();
+        updateShopUI();
+        closeModal('shop-edit-modal');
+        alert('บันทึกข้อมูลร้านเรียบร้อย');
+    }
+
+    async function navTo(page) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(page).classList.add('active');
+        const tabKey = page === 'manage-page' ? 't-manage' : 't-' + page.split('-')[0];
+        document.getElementById(tabKey).classList.add('active');
+        if(page !== 'order-page') await loadDB();
+        if(page === 'order-page') renderMenus();
+        if(page === 'history-page') renderOrders();
+    }
+
+    function renderOrders() {
+        const list = document.getElementById('orders-list-ui');
+        const todayStr = new Date().toLocaleDateString('th-TH');
+        let allOrders = db.orders || [];
+        let todayOrders = allOrders.filter(o => o.date === todayStr);
+        let successOrders = todayOrders.filter(o => o.status === 'เสร็จสิ้น');
+        let cancelOrders = todayOrders.filter(o => o.status === 'ยกเลิก');
+
+        if(isAdmin) {
+            document.getElementById('admin-dashboard').style.display = 'grid';
+            document.getElementById('user-total-info').style.display = 'none';
+            document.getElementById('today-sales').textContent = `฿${successOrders.reduce((a,b) => a + b.total, 0)}`;
+            document.getElementById('today-count').textContent = todayOrders.length;
+            document.getElementById('today-cancel').textContent = cancelOrders.length;
+        } else if(isStaff) {
+            document.getElementById('admin-dashboard').style.display = 'none';
+            document.getElementById('user-total-info').style.display = 'none';
+        } else {
+            document.getElementById('admin-dashboard').style.display = 'none';
+            document.getElementById('user-total-info').style.display = 'block';
+            let myValidOrders = allOrders.filter(o => o.uid === userId && o.status !== 'ยกเลิก');
+            document.getElementById('user-grand-total').textContent = `฿${myValidOrders.reduce((a,b) => a + b.total, 0)}`;
+        }
+
+        let show = (isAdmin || isStaff) ? allOrders : allOrders.filter(o => o.uid === userId);
+        if(!show || show.length === 0) { list.innerHTML = "<center style='padding:50px; color:#bbb;'>ไม่มีข้อมูล</center>"; return; }
+        
+        list.innerHTML = show.map(o => `
+            <div class="card" style="border-left: 5px solid ${o.status === 'ยกเลิก' ? 'var(--danger)' : o.status === 'เสร็จสิ้น' ? 'var(--success)' : 'var(--pending)'}">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                    <div>
+                        <small style="color:#999; font-size:10px;">${o.time} | ผู้รับ: <b>${o.staff_in_charge || '-'}</b></small>
+                        <div style="font-weight:700; font-size:14px;">${o.user}</div>
+                    </div>
+                    <span class="status-badge ${o.status === 'ยกเลิก' ? 'bg-danger' : o.status === 'เสร็จสิ้น' ? 'bg-success' : 'bg-pending'}">${o.status}</span>
+                </div>
+                <div style="font-size:13px; margin-bottom:10px; line-height:1.4; ${o.status === 'ยกเลิก' ? 'text-decoration:line-through; color:#ccc;' : ''}">
+                    ${o.items.join('<br>')}
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #f5f5f5; padding-top:8px;">
+                    <b style="color:var(--secondary); font-size:15px;">฿${o.total}</b>
+                    <div style="display:flex; gap:6px;">
+                        ${(isAdmin || isStaff) && o.status === 'รอดำเนินการ' ? `<button onclick="updateStatus(${o.id}, 'เสร็จสิ้น')" style="background:var(--success); color:white; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">สำเร็จ</button>` : ''}
+                        ${o.status === 'รอดำเนินการ' ? `<button onclick="updateStatus(${o.id}, 'ยกเลิก')" style="background:#f1f1f1; color:#666; border:none; padding:6px 12px; border-radius:8px; font-size:11px;">ยกเลิก</button>` : ''}
+                    </div>
+                </div>
+            </div>`).join('');
+    }
+
+    async function updateStatus(id, newStatus) {
+        if(confirm(`ยืนยันเป็น "${newStatus}"?`)) {
+            let idx = db.orders.findIndex(o => o.id === id);
+            if(idx > -1) { db.orders[idx].status = newStatus; await saveDB(); renderOrders(); }
+        }
+    }
+
+    async function clearAllOrders() {
+        if(!isAdmin) return;
+        if(confirm('ลบออเดอร์ทั้งหมด?')) { db.orders = []; await saveDB(); renderOrders(); }
+    }
+
+    function openAddMenuModal() {
+        if(!isAdmin) return;
+        document.getElementById('modal-title').textContent = "เพิ่มเมนูใหม่";
+        document.getElementById('edit-menu-id').value = "";
+        document.getElementById('m-name').value = "";
+        document.getElementById('m-price').value = "";
+        tempOpts = []; tempMImg = "";
+        renderToppingEdit();
+        document.getElementById('admin-modal').style.display = 'flex';
+    }
+
+    function editMenu(id) {
+        if(!isAdmin) return;
+        const m = db.menus.find(item => item.id === id);
+        if(!m) return;
+        document.getElementById('modal-title').textContent = "แก้ไขเมนู";
+        document.getElementById('edit-menu-id').value = m.id;
+        document.getElementById('m-name').value = m.name;
+        document.getElementById('m-price').value = m.price;
+        tempOpts = m.options ? [...m.options] : [];
+        tempMImg = m.img || "";
+        renderToppingEdit();
+        document.getElementById('admin-modal').style.display = 'flex';
+    }
+
+    function renderToppingEdit() {
+        const container = document.getElementById('opt-list-edit');
+        if(tempOpts.length === 0) { container.innerHTML = "<small style='color:#999;'>ยังไม่มีท็อปปิ้ง</small>"; return; }
+        container.innerHTML = tempOpts.map((o, idx) => `
+            <div class="topping-edit-item">
+                <div style="display:flex; align-items:center; flex:1; cursor:pointer;" onclick="inlineEditTopping(${idx})">
+                    <img src="${o.img || 'https://via.placeholder.com/30'}" class="topping-preview-img">
+                    <span><b>${o.name}</b> (+฿${o.price})</span>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <label style="cursor:pointer; font-size:16px;">🖼️<input type="file" style="display:none" onchange="editToppingImg(${idx}, this)"></label>
+                    <span onclick="removeTopping(${idx})" style="color:red; font-weight:bold; cursor:pointer; font-size:16px;">✕</span>
+                </div>
+            </div>`).join('');
+    }
+
+    function editToppingImg(idx, input) {
+        if(!input.files[0]) return;
+        let r = new FileReader();
+        r.onload = (e) => { tempOpts[idx].img = e.target.result; renderToppingEdit(); };
+        r.readAsDataURL(input.files[0]);
+    }
+
+    function inlineEditTopping(idx) {
+        let o = tempOpts[idx];
+        let newName = prompt("แก้ไขชื่อท็อปปิ้ง:", o.name);
+        if(newName === null) return;
+        let newPrice = prompt("แก้ไขราคาเพิ่ม (+):", o.price);
+        if(newPrice === null) return;
+        tempOpts[idx].name = newName;
+        tempOpts[idx].price = parseInt(newPrice);
+        renderToppingEdit();
+    }
+
+    function removeTopping(idx) {
+        if(confirm('ลบท็อปปิ้งนี้?')) { tempOpts.splice(idx, 1); renderToppingEdit(); }
+    }
+
+    async function saveMenu() {
+        let name = document.getElementById('m-name').value;
+        let price = document.getElementById('m-price').value;
+        let editId = document.getElementById('edit-menu-id').value;
+        if(!name || !price) return alert('ใส่ข้อมูลให้ครบ');
+        if(editId) {
+            let idx = db.menus.findIndex(m => m.id == editId);
+            db.menus[idx] = { ...db.menus[idx], name: name, price: parseInt(price), img: tempMImg || db.menus[idx].img, options: tempOpts };
+        } else {
+            db.menus.push({ id: Date.now(), name: name, price: parseInt(price), img: tempMImg, options: tempOpts, order: db.menus.length });
+        }
+        await saveDB(); closeModal('admin-modal'); renderMenus();
+    }
+
+    function addOptToTemp() {
+        let n = document.getElementById('o-name').value;
+        let p = document.getElementById('o-price').value;
+        if(n && p) {
+            tempOpts.push({ name: n, price: parseInt(p), img: tempOImg });
+            document.getElementById('o-name').value=''; document.getElementById('o-price').value=''; document.getElementById('o-img-input').value='';
+            tempOImg=""; renderToppingEdit();
+        } else { alert('กรุณากรอกชื่อและราคา'); }
+    }
+
+    function enterAsCustomer() {
+        let name = document.getElementById('input-username').value.trim();
+        if(!name) return alert('กรุณาใส่ชื่อของคุณ');
+        user = name; localStorage.setItem('puretao_user_name', user);
+        document.getElementById('id-overlay').style.display = 'none';
+        document.getElementById('btn-logout-main').style.display = 'block';
+        updateUserLabels(); renderMenus();
+    }
+    
+    function enterAsStaffOrAdmin() {
+        let pw = prompt("รหัสผ่าน:");
+        if(pw === '1234') {
+            isAdmin = true; isStaff = false;
+            sessionStorage.setItem('puretao_role', 'admin');
+            document.getElementById('id-overlay').style.display = 'none';
+            enableRoleMode('เจ้าของร้าน'); navTo('history-page');
+        } else if(pw === '1111') {
+            isStaff = true; isAdmin = false;
+            sessionStorage.setItem('puretao_role', 'staff');
+            document.getElementById('id-overlay').style.display = 'none';
+            enableRoleMode('คนขาย'); navTo('history-page');
+        } else if(pw !== null) { alert("รหัสผ่านไม่ถูกต้อง"); }
+    }
+
+    function logout() { 
+        if(confirm('ต้องการออกจากระบบ?')) { localStorage.clear(); sessionStorage.clear(); location.reload(); }
+    }
+
+    function enableRoleMode(role) { 
+        const badge = document.getElementById('role-badge');
+        badge.style.display = 'block';
+        badge.textContent = role;
+        document.getElementById('btn-logout-main').style.display = 'block';
+        if(role === 'เจ้าของร้าน') document.getElementById('t-manage').style.display = 'flex';
+    }
+
+    function encodeImg(i, mode) { 
+        if(!i.files[0]) return;
+        let r = new FileReader(); 
+        r.onload = (e) => { 
+            if(mode === 'menu') tempMImg = e.target.result; 
+            else if(mode === 'logo') tempLogoImg = e.target.result;
+            else tempOImg = e.target.result; 
+        }; 
+        r.readAsDataURL(i.files[0]); 
+    }
+
+    function updateShopUI() { 
+        document.getElementById('ui-name').textContent = db.shop.name; 
+        document.getElementById('ui-sub').textContent = db.shop.sub; 
+        document.getElementById('landing-shop-name').textContent = db.shop.name; 
+        document.getElementById('landing-shop-sub').textContent = db.shop.sub; 
+        if(db.shop.logo) { 
+            document.getElementById('ui-logo').src = db.shop.logo; 
+            document.getElementById('landing-logo').src = db.shop.logo; 
+        }
+    }
+
+    function updateUserLabels() { document.querySelectorAll('.customer-name-label').forEach(el => el.textContent = user); }
+    function zoom(s) { if(s) { document.getElementById('zoom-modal').style.display='flex'; document.getElementById('zoom-img').src=s; } }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    async function delMenu(id) { 
+        if(!isAdmin) return;
+        if(confirm('ยืนยันการลบ?')) { db.menus = db.menus.filter(m => m.id !== id); await saveDB(); renderMenus(); } 
+    }
+    function exportData() {
+        if(!isAdmin) return;
+        const blob = new Blob([JSON.stringify(db)], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `puretao_db_${Date.now()}.json`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+    function importData(input) {
+        if(!isAdmin) return;
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if(confirm('เขียนทับข้อมูลทั้งหมด?')) { db = json; await saveDB(); location.reload(); }
+            } catch (err) { alert('ไฟล์ไม่ถูกต้อง'); }
+        };
+        reader.readAsText(input.files[0]);
+    }
+</script>
+</body>
+</html>
