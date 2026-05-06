@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Puretao V6.4.1 - Enhanced (Bags Version)</title>
+    <title>Puretao V7.0 - Enhanced (Bags Version)</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --dark: #2D1400; --cream: #FAF7F2; --white: #FFFFFF; --border: #E8D5C4; --secondary: #8B4513; --success: #28a745; --pending: #ffc107; --danger: #dc3545; }
@@ -283,7 +283,7 @@
             document.getElementById('cloud-status').textContent = "Sync: Connected ✅";
         } catch (e) {
             document.getElementById('cloud-status').textContent = "Sync: Offline ⚠️";
-            const local = localStorage.getItem('puretao_v6.4_db');
+            const local = localStorage.getItem('puretao_v7.0_db');
             if(local) db = JSON.parse(local);
         }
     }
@@ -294,7 +294,7 @@
         try {
             const data = { shop: db.shop, menus: db.menus };
             await fetch(CONTENT_URL, { method: 'PUT', body: JSON.stringify(data) });
-            localStorage.setItem('puretao_v6.4_db', JSON.stringify(db));
+            localStorage.setItem('puretao_v7.0_db', JSON.stringify(db));
             document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
         } catch (e) { document.getElementById('cloud-status').textContent = "Sync: Local Only 💾"; }
     }
@@ -304,7 +304,7 @@
         document.getElementById('cloud-status').textContent = "Sync: Updating Orders...";
         try {
             await fetch(ORDERS_URL, { method: 'PUT', body: JSON.stringify(db.orders) });
-            localStorage.setItem('puretao_v6.4_db', JSON.stringify(db));
+            localStorage.setItem('puretao_v7.0_db', JSON.stringify(db));
             document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
         } catch (e) { document.getElementById('cloud-status').textContent = "Sync: Local Only 💾"; }
     }
