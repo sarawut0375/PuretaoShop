@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Puretao V7.0 - Enhanced (Bags Version)</title>
+    <title>Puretao V6.4.1 - Stock System</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --dark: #2D1400; --cream: #FAF7F2; --white: #FFFFFF; --border: #E8D5C4; --secondary: #8B4513; --success: #28a745; --pending: #ffc107; --danger: #dc3545; }
@@ -67,7 +67,6 @@
         .summary-table td { padding: 8px; border-bottom: 1px solid #eee; }
         .summary-qty { font-weight: bold; color: var(--secondary); text-align: center; }
 
-        /* ปรับแต่งส่วน QR และยอดเงิน */
         .qr-card { background: #fdfdfd; border: 2px dashed var(--gold); border-radius: 12px; padding: 15px; text-align: center; margin-top: 10px; animation: slideIn 0.3s; }
         .qr-img { width: 180px; height: 180px; margin: 10px auto; display: block; border: 1px solid #eee; object-fit: contain; }
         .pay-label { font-size: 11px; font-weight: 300; color: #888; display: block; margin-bottom: 5px; text-align: center; }
@@ -78,6 +77,12 @@
         .cart-summary-bubble { background: #FFF9E6; border: 1px solid var(--gold); padding: 8px 12px; border-radius: 10px; margin-bottom: 10px; font-size: 14px; }
         .btn-add-bag { background: var(--gold); color: white; border: none; padding: 8px 12px; border-radius: 20px; font-weight: 700; font-size: 11px; cursor: pointer; margin-top: 10px; width: 100%; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .cart-item-row { display: flex; justify-content: space-between; align-items: center; font-size: 14px; border-bottom: 1px dashed #eee; padding: 6px 0; }
+        
+        /* Stock Styles */
+        .stock-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stock-input-group { background: #f9f9f9; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
+        .stock-input-group label { font-size: 11px; font-weight: bold; color: var(--secondary); display: block; margin-bottom: 4px; }
+        .stock-input-group input { margin-bottom: 0; padding: 8px; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -150,10 +155,44 @@
     <div id="manage-page" class="page">
         <div style="padding:20px;"><h2>จัดการหลังบ้าน</h2></div>
         <div style="padding:0 15px;">
+            
+            <!-- Stock Input Section -->
+            <div class="card" style="border-color: var(--gold); background: #fff;">
+                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 10px;">📦 กำหนดจำนวนต้นทุนต่อวัน</h4>
+                <div class="stock-grid">
+                    <div class="stock-input-group">
+                        <label>1. น้ำเต้าหู้ (ml)</label>
+                        <input type="number" id="stock-soy" placeholder="0" onchange="saveStock()">
+                    </div>
+                    <div class="stock-input-group">
+                        <label>2. น้ำขิง (ml)</label>
+                        <input type="number" id="stock-ginger" placeholder="0" onchange="saveStock()">
+                    </div>
+                    <div class="stock-input-group">
+                        <label>3. ซุปงาดำ (ml)</label>
+                        <input type="number" id="stock-sesame" placeholder="0" onchange="saveStock()">
+                    </div>
+                    <div class="stock-input-group">
+                        <label>4. สังขยา (ถ้วย/90ml)</label>
+                        <input type="number" id="stock-custard" placeholder="0" onchange="saveStock()">
+                    </div>
+                    <div class="stock-input-group">
+                        <label>5. ปาท่องโก๋ (ชิ้น)</label>
+                        <input type="number" id="stock-patongko" placeholder="0" onchange="saveStock()">
+                    </div>
+                    <div class="stock-input-group">
+                        <label>6. หมั่นโถ (ชิ้น)</label>
+                        <input type="number" id="stock-mantou" placeholder="0" onchange="saveStock()">
+                    </div>
+                </div>
+                <p style="font-size: 10px; color: #999;">* ระบบจะบันทึกค่าต้นทุนอัตโนมัติเมื่อมีการเปลี่ยนแปลง</p>
+            </div>
+
             <div id="manage-summary-section" class="card" style="border-color: var(--gold); background: #fff;">
-                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 5px;">📊 สรุปจำนวนวัตถุดิบที่ต้องใช้ (วันนี้)</h4>
+                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 5px;">📊 สรุปยอดคงเหลือ (ต้นทุน - ขาย = คงเหลือ)</h4>
                 <div id="item-sales-summary"></div>
             </div>
+
             <div class="card" style="margin:10px 0; border-style:solid; border-color:var(--gold); background: #fffcf5;">
                 <h4 style="margin-bottom:10px; font-size:14px;">ตั้งค่าข้อมูลร้าน</h4>
                 <button class="btn-main" style="background:var(--secondary); padding:10px; font-size:13px;" onclick="openShopEditModal()">✏️ แก้ไขชื่อ/รูป/QR รับเงิน</button>
@@ -236,17 +275,19 @@
     const BASE_URL = "https://puretaoshop-default-rtdb.asia-southeast1.firebasedatabase.app/";
     const CONTENT_URL = BASE_URL + "/content.json";
     const ORDERS_URL = BASE_URL + "/orders.json";
+    const STOCK_URL = BASE_URL + "/stock.json";
 
-    let db = { 
-        shop: {name:"PureTao", sub:"สดใหม่เพื่อสุขภาพ", logo:"", pp:"0000000000", qr_type: "promptpay", custom_qr: ""}, 
-        menus: [], 
-        orders: [] 
+    let db = { 
+        shop: {name:"PureTao", sub:"สดใหม่เพื่อสุขภาพ", logo:"", pp:"0000000000", qr_type: "promptpay", custom_qr: ""}, 
+        menus: [], 
+        orders: [],
+        stock: { soy: 0, ginger: 0, sesame: 0, custard: 0, patongko: 0, mantou: 0 }
     };
 
-    let bags = []; 
-    let activeSelection = {}; 
-    let user = ""; let userId = ""; 
-    let isAdmin = false; let isStaff = false; 
+    let bags = []; 
+    let activeSelection = {}; 
+    let user = ""; let userId = ""; 
+    let isAdmin = false; let isStaff = false; 
     let tempMImg = ""; let tempOImg = ""; let tempLogoImg = ""; let tempQRImg = ""; let tempOpts = [];
     let isInitialLoadDone = false;
 
@@ -263,27 +304,32 @@
         document.getElementById('btn-start').disabled = false;
         document.getElementById('btn-start').textContent = "เริ่มสั่งอาหาร";
         updateShopUI(); renderMenus();
+        if(isAdmin) updateStockUI();
     };
 
     async function loadDB() {
         document.getElementById('cloud-status').textContent = "Sync: Loading...";
         try {
-            const [contentRes, ordersRes] = await Promise.all([
+            const [contentRes, ordersRes, stockRes] = await Promise.all([
                 fetch(CONTENT_URL + "?t=" + Date.now()),
-                fetch(ORDERS_URL + "?t=" + Date.now())
+                fetch(ORDERS_URL + "?t=" + Date.now()),
+                fetch(STOCK_URL + "?t=" + Date.now())
             ]);
             const contentData = await contentRes.json();
             const ordersData = await ordersRes.json();
+            const stockData = await stockRes.json();
+            
             if(contentData) {
                 db.shop = contentData.shop || db.shop;
                 db.menus = contentData.menus || [];
                 db.menus.sort((a, b) => (a.order || 0) - (b.order || 0));
             }
             db.orders = ordersData || [];
+            db.stock = stockData || db.stock;
             document.getElementById('cloud-status').textContent = "Sync: Connected ✅";
         } catch (e) {
             document.getElementById('cloud-status').textContent = "Sync: Offline ⚠️";
-            const local = localStorage.getItem('puretao_v7.0_db');
+            const local = localStorage.getItem('puretao_v6.4_db');
             if(local) db = JSON.parse(local);
         }
     }
@@ -294,7 +340,7 @@
         try {
             const data = { shop: db.shop, menus: db.menus };
             await fetch(CONTENT_URL, { method: 'PUT', body: JSON.stringify(data) });
-            localStorage.setItem('puretao_v7.0_db', JSON.stringify(db));
+            localStorage.setItem('puretao_v6.4_db', JSON.stringify(db));
             document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
         } catch (e) { document.getElementById('cloud-status').textContent = "Sync: Local Only 💾"; }
     }
@@ -304,9 +350,34 @@
         document.getElementById('cloud-status').textContent = "Sync: Updating Orders...";
         try {
             await fetch(ORDERS_URL, { method: 'PUT', body: JSON.stringify(db.orders) });
-            localStorage.setItem('puretao_v7.0_db', JSON.stringify(db));
+            localStorage.setItem('puretao_v6.4_db', JSON.stringify(db));
             document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
         } catch (e) { document.getElementById('cloud-status').textContent = "Sync: Local Only 💾"; }
+    }
+
+    async function saveStock() {
+        if(!isAdmin || !isInitialLoadDone) return;
+        db.stock.soy = parseInt(document.getElementById('stock-soy').value) || 0;
+        db.stock.ginger = parseInt(document.getElementById('stock-ginger').value) || 0;
+        db.stock.sesame = parseInt(document.getElementById('stock-sesame').value) || 0;
+        db.stock.custard = parseInt(document.getElementById('stock-custard').value) || 0;
+        db.stock.patongko = parseInt(document.getElementById('stock-patongko').value) || 0;
+        db.stock.mantou = parseInt(document.getElementById('stock-mantou').value) || 0;
+        
+        try {
+            await fetch(STOCK_URL, { method: 'PUT', body: JSON.stringify(db.stock) });
+            localStorage.setItem('puretao_v6.4_db', JSON.stringify(db));
+            updateSalesSummary();
+        } catch (e) {}
+    }
+
+    function updateStockUI() {
+        document.getElementById('stock-soy').value = db.stock.soy;
+        document.getElementById('stock-ginger').value = db.stock.ginger;
+        document.getElementById('stock-sesame').value = db.stock.sesame;
+        document.getElementById('stock-custard').value = db.stock.custard;
+        document.getElementById('stock-patongko').value = db.stock.patongko;
+        document.getElementById('stock-mantou').value = db.stock.mantou;
     }
 
     function renderMenus() {
@@ -462,7 +533,6 @@
 
     async function placeOrder() {
         let total = 0;
-        // เก็บรายละเอียดแยกรายถุง (Bags) เพื่อใช้ในการคำนวณสรุปแยกชนิดภายหลัง
         let orderRawDetails = bags.map(b => {
             total += (b.price + b.optPrice) * b.qty;
             return {
@@ -564,85 +634,94 @@
         await loadDB();
         if(page === 'order-page') renderMenus();
         if(page === 'history-page') renderOrders();
-        if(page === 'manage-page' && isAdmin) updateSalesSummary();
+        if(page === 'manage-page' && isAdmin) { updateSalesSummary(); updateStockUI(); }
     }
 
-    // แก้ไขหน้าสรุปสินค้าให้ "แตกรายการ" ท็อปปิ้งออกมานับแยกชิ้นทั้งหมด
+    // Logic สรุปยอดขาย และ ตัดต้นทุน
     function updateSalesSummary() {
         const todayStr = new Date().toLocaleDateString('th-TH');
         const summaryDiv = document.getElementById('item-sales-summary');
         if (!isAdmin) return;
         
-        let itemCounts = {}; // เก็บจำนวนแยกตามชื่อเมนูหลักและท็อปปิ้ง
+        let salesByStock = { soy: 0, ginger: 0, sesame: 0, custard: 0, patongko: 0, mantou: 0 };
+        let itemCounts = {}; 
         
         db.orders.forEach(o => { 
             if (o.date === todayStr && o.status === 'เสร็จสิ้น') { 
-                // ใช้ข้อมูลดิบ (raw_details) เพื่อแกะท็อปปิ้งออกมานับแยกจริง
                 if(o.raw_details) {
                     o.raw_details.forEach(bag => {
-                        // 1. นับเมนูหลัก
-                        itemCounts[bag.name] = (itemCounts[bag.name] || 0) + (bag.qty || 1);
-                        // 2. นับท็อปปิ้งแยกทีละชนิด (วนลูปท็อปปิ้งทั้งหมดในถุงนั้นๆ)
-                        if(bag.toppings && bag.toppings.length > 0) {
-                            bag.toppings.forEach(top => {
-                                let topName = `[Topping] ${top}`;
-                                itemCounts[topName] = (itemCounts[topName] || 0) + (bag.qty || 1);
-                            });
+                        let q = bag.qty || 1;
+                        // นับรายการทั่วไป
+                        itemCounts[bag.name] = (itemCounts[bag.name] || 0) + q;
+                        if(bag.toppings) bag.toppings.forEach(t => { let tn = `└ ${t}`; itemCounts[tn] = (itemCounts[tn] || 0) + q; });
+
+                        // 1. ตัดสต็อก น้ำเต้าหู้
+                        if(bag.name.includes("น้ำเต้าหู้เข้มข้น")) {
+                            if(bag.name.includes("300")) salesByStock.soy += (300 * q);
+                            else if(bag.name.includes("400")) salesByStock.soy += (400 * q);
+                            else salesByStock.soy += (300 * q); // Default
                         }
-                    });
-                } else {
-                    // Logic สำรองสำหรับออเดอร์เก่า
-                    o.items.forEach(line => { 
-                        let p = line.split(' x'); 
-                        let fullText = p[0]; 
-                        let qty = parseInt(p[1]) || 0; 
-                        let menuMatch = fullText.match(/^(.+?)\s*\[(.+?)\]$/);
-                        if(menuMatch) {
-                            let mName = menuMatch[1].trim();
-                            let tops = menuMatch[2].split(',').map(s => s.trim());
-                            itemCounts[mName] = (itemCounts[mName] || 0) + qty;
-                            tops.forEach(t => {
-                                let tName = `[Topping] ${t}`;
-                                itemCounts[tName] = (itemCounts[tName] || 0) + qty;
-                            });
-                        } else {
-                            itemCounts[fullText] = (itemCounts[fullText] || 0) + qty;
+                        // 2. ตัดสต็อก น้ำขิง
+                        if(bag.name.includes("น้ำขิง")) {
+                            if(bag.name.includes("300")) salesByStock.ginger += (300 * q);
+                            else if(bag.name.includes("400")) salesByStock.ginger += (400 * q);
+                            else salesByStock.ginger += (300 * q);
+                        }
+                        // 3. ตัดสต็อก ซุปงาดำ
+                        if(bag.name.includes("ซุปงาดำโมจิน้ำเต้าหู้") || bag.name.includes("ซุปงาดำ")) {
+                            salesByStock.sesame += (250 * q);
+                        }
+                        // 4. ตัดสต็อก สังขยา
+                        if(bag.name.includes("สังขยาใบเตย") || bag.name.includes("สังขยา")) {
+                            salesByStock.custard += (1 * q); // นับเป็นถ้วย
+                        }
+                        // 5. ตัดสต็อก ปาท่องโก๋
+                        if(bag.name.includes("ปาท่องโก๋") || bag.name.includes("ชุดปาท่องโก๋")) {
+                            salesByStock.patongko += (1 * q);
+                        }
+                        // 6. ตัดสต็อก หมั่นโถ
+                        if(bag.name.includes("หมั่นโถ")) {
+                            salesByStock.mantou += (1 * q);
                         }
                     });
                 }
             }
         });
 
-        // เรียงลำดับจากมากไปน้อย (เอา Topping ไว้กลุ่มเดียวกันด้านล่าง)
-        const sorted = Object.entries(itemCounts).sort((a,b) => {
-            let aIsTop = a[0].includes('[Topping]');
-            let bIsTop = b[0].includes('[Topping]');
-            if(aIsTop !== bIsTop) return aIsTop ? 1 : -1;
-            return b[1] - a[1];
-        });
-        
-        if (sorted.length === 0) { 
-            summaryDiv.innerHTML = "<p style='font-size:11px; color:#999; padding:10px;'>ไม่มีรายการขายสำเร็จ</p>"; 
-            return; 
-        }
+        const stockItems = [
+            { id: 'soy', label: '1. น้ำเต้าหู้เข้มข้น', unit: 'ml' },
+            { id: 'ginger', label: '2. น้ำขิง', unit: 'ml' },
+            { id: 'sesame', label: '3. ซุปงาดำ', unit: 'ml' },
+            { id: 'custard', label: '4. สังขยาใบเตย', unit: 'ถ้วย' },
+            { id: 'patongko', label: '5. ปาท่องโก๋', unit: 'ชิ้น' },
+            { id: 'mantou', label: '6. หมั่นโถนมสด', unit: 'ชิ้น' }
+        ];
 
         let html = `<table class="summary-table">
             <thead>
                 <tr>
-                    <th>ชนิดสินค้า / ท็อปปิ้ง</th>
-                    <th style="text-align:center;">จำนวนที่ขาย</th>
+                    <th>รายการวัตถุดิบ</th>
+                    <th style="text-align:center;">ต้นทุน</th>
+                    <th style="text-align:center;">ขายไป</th>
+                    <th style="text-align:center;">คงเหลือ</th>
                 </tr>
             </thead>
             <tbody>`;
         
-        sorted.forEach(([n, q]) => { 
-            let isTopping = n.includes('[Topping]');
-            let displayName = isTopping ? n.replace('[Topping] ', '└ ') : n;
-            let style = isTopping ? 'color: #777; font-size: 11px; padding-left: 15px;' : 'font-weight: 600; color: var(--secondary);';
-            html += `<tr><td style="${style}">${displayName}</td><td class="summary-qty">${q}</td></tr>`; 
+        stockItems.forEach(item => {
+            let cost = db.stock[item.id] || 0;
+            let sold = salesByStock[item.id] || 0;
+            let remain = cost - sold;
+            let color = remain < 0 ? 'color:red' : '';
+            html += `<tr>
+                <td style="font-size:11px;">${item.label}</td>
+                <td style="text-align:center; color:#888;">${cost}</td>
+                <td style="text-align:center; color:var(--danger);">${sold}</td>
+                <td style="text-align:center; font-weight:bold; ${color}">${remain} ${item.unit}</td>
+            </tr>`;
         });
         
-        summaryDiv.innerHTML = html + `</tbody></table><p style="font-size:9px; color:#bbb; margin-top:8px;">* ยอดสรุปนับแยกตามจำนวนชิ้นจริงที่ต้องเตรียม</p>`;
+        summaryDiv.innerHTML = html + `</tbody></table>`;
     }
 
     function toggleQRInput() {
