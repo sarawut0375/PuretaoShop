@@ -888,6 +888,8 @@
         try {
             await fetch(STOCK_URL, { method:'PUT', body: JSON.stringify(db.stock) });
             saveLocal();
+            var todayKey = isoFromDate(new Date());
+            if (snapshots[todayKey]) { snapshots[todayKey].stock = Object.assign({}, db.stock); }
             updateSalesSummary();
             renderStockChart();
             if (btn)    { btn.disabled = false; btn.innerHTML = '✅ บันทึกสำเร็จ'; }
@@ -895,6 +897,8 @@
             setTimeout(function(){ if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2000);
         } catch(e) {
             saveLocal();
+            var todayKey = isoFromDate(new Date());
+            if (snapshots[todayKey]) { snapshots[todayKey].stock = Object.assign({}, db.stock); }
             updateSalesSummary();
             renderStockChart();
             if (btn)    { btn.disabled = false; btn.innerHTML = '⚠️ บันทึกเฉพาะเครื่อง'; }
@@ -1713,7 +1717,11 @@
         var dates = getChartDates();
         var labels = dates.map(cLabel);
         if (dates.length === 0) { clearCanvas('c-stock','📅 เลือกช่วงวันที่ แล้วกด "ดูกราฟ"'); return; }
-        var cost = dates.map(function(iso){ return (snapshots[iso]&&snapshots[iso].stock&&snapshots[iso].stock[item]!==undefined) ? snapshots[iso].stock[item] : (db.stock[item]||0); });
+        var todayISO = isoFromDate(new Date());
+        var cost = dates.map(function(iso){
+            if (iso === todayISO) return db.stock[item] || 0;
+            return (snapshots[iso]&&snapshots[iso].stock&&snapshots[iso].stock[item]!==undefined) ? snapshots[iso].stock[item] : (db.stock[item]||0);
+        });
         var sold = dates.map(function(iso){ return getSoldForISO(iso,item); });
         drawBars('c-stock',
             [{ label:'ต้นทุน', data:cost, color:'rgba(212,175,55,0.85)' },
