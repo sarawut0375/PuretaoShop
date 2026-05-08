@@ -349,15 +349,22 @@
 
             <!-- Stock Input Section -->
             <div class="card" style="border-color: var(--gold); background: #fff;">
-                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 10px;">📦 กำหนดจำนวนต้นทุนต่อวัน</h4>
-                <div class="stock-grid">
-                    <div class="stock-input-group"><label>1. น้ำเต้าหู้ (ml)</label><input type="number" id="stock-soy" placeholder="0" onchange="saveStock()"></div>
-                    <div class="stock-input-group"><label>2. น้ำขิง (ml)</label><input type="number" id="stock-ginger" placeholder="0" onchange="saveStock()"></div>
-                    <div class="stock-input-group"><label>3. ซุปงาดำ (ml)</label><input type="number" id="stock-sesame" placeholder="0" onchange="saveStock()"></div>
-                    <div class="stock-input-group"><label>4. สังขยา (ถ้วย/90ml)</label><input type="number" id="stock-custard" placeholder="0" onchange="saveStock()"></div>
-                    <div class="stock-input-group"><label>5. ปาท่องโก๋ (ชิ้น)</label><input type="number" id="stock-patongko" placeholder="0" onchange="saveStock()"></div>
-                    <div class="stock-input-group"><label>6. หมั่นโถ (ชิ้น)</label><input type="number" id="stock-mantou" placeholder="0" onchange="saveStock()"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h4 style="font-size: 14px; color: var(--secondary);">📦 กำหนดจำนวนต้นทุนต่อวัน</h4>
+                    <span id="stock-save-status" style="font-size:11px; color:#aaa;"></span>
                 </div>
+                <div class="stock-grid">
+                    <div class="stock-input-group"><label>1. น้ำเต้าหู้ (ml)</label><input type="number" id="stock-soy" placeholder="0"></div>
+                    <div class="stock-input-group"><label>2. น้ำขิง (ml)</label><input type="number" id="stock-ginger" placeholder="0"></div>
+                    <div class="stock-input-group"><label>3. ซุปงาดำ (ml)</label><input type="number" id="stock-sesame" placeholder="0"></div>
+                    <div class="stock-input-group"><label>4. สังขยา (ถ้วย/90ml)</label><input type="number" id="stock-custard" placeholder="0"></div>
+                    <div class="stock-input-group"><label>5. ปาท่องโก๋ (ชิ้น)</label><input type="number" id="stock-patongko" placeholder="0"></div>
+                    <div class="stock-input-group"><label>6. หมั่นโถ (ชิ้น)</label><input type="number" id="stock-mantou" placeholder="0"></div>
+                </div>
+                <button onclick="saveStock()" id="btn-save-stock"
+                    style="width:100%; background:var(--secondary); color:white; border:none; padding:12px; border-radius:12px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; margin-top:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    💾 บันทึกต้นทุน
+                </button>
             </div>
             <!-- Sales Summary -->
             <div id="manage-summary-section" class="card" style="border-color: var(--gold); background: #fff;">
@@ -789,12 +796,12 @@
             if (!o.raw_details) return;
             o.raw_details.forEach(bag => {
                 const q = bag.qty || 1;
-                if (bag.name.includes("น้ำเต้าหู้เข้มข้น")) sold.soy      += (bag.name.includes("400") ? 400 : 300) * q;
-                if (bag.name.includes("น้ำขิง"))             sold.ginger   += (bag.name.includes("400") ? 400 : 300) * q;
-                if (bag.name.includes("ซุปงาดำ"))            sold.sesame   += 250 * q;
-                if (bag.name.includes("สังขยา"))             sold.custard  += q;
-                if (bag.name.includes("ปาท่องโก๋"))         sold.patongko += q;
-                if (bag.name.includes("หมั่นโถ"))            sold.mantou   += q;
+                if (bag.name.includes("น้ำเต้าหู้")) sold.soy      += (bag.name.includes("400") ? 400 : 300) * q;
+                if (bag.name.includes("น้ำขิง"))     sold.ginger   += (bag.name.includes("400") ? 400 : 300) * q;
+                if (bag.name.includes("ซุปงาดำ"))    sold.sesame   += 250 * q;
+                if (bag.name.includes("สังขยา"))     sold.custard  += q;
+                if (bag.name.includes("ปาท่องโก๋")) sold.patongko += q;
+                if (bag.name.includes("หมั่นโถ"))    sold.mantou   += q;
             });
         });
 
@@ -869,6 +876,9 @@
 
     async function saveStock() {
         if (!isAdmin || !isInitialLoadDone) return;
+        const btn    = document.getElementById('btn-save-stock');
+        const status = document.getElementById('stock-save-status');
+        if (btn) { btn.disabled = true; btn.innerHTML = '⏳ กำลังบันทึก...'; }
         db.stock.soy      = parseInt(document.getElementById('stock-soy').value)      || 0;
         db.stock.ginger   = parseInt(document.getElementById('stock-ginger').value)   || 0;
         db.stock.sesame   = parseInt(document.getElementById('stock-sesame').value)   || 0;
@@ -877,9 +887,20 @@
         db.stock.mantou   = parseInt(document.getElementById('stock-mantou').value)   || 0;
         try {
             await fetch(STOCK_URL, { method:'PUT', body: JSON.stringify(db.stock) });
-            localStorage.setItem('puretao_v8.2_db', JSON.stringify(db));
+            saveLocal();
             updateSalesSummary();
-        } catch(e) {}
+            renderStockChart();
+            if (btn)    { btn.disabled = false; btn.innerHTML = '✅ บันทึกสำเร็จ'; }
+            if (status) { status.textContent = 'บันทึกแล้ว ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); }
+            setTimeout(function(){ if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2000);
+        } catch(e) {
+            saveLocal();
+            updateSalesSummary();
+            renderStockChart();
+            if (btn)    { btn.disabled = false; btn.innerHTML = '⚠️ บันทึกเฉพาะเครื่อง'; }
+            if (status) { status.textContent = 'ออฟไลน์ — บันทึกในเครื่อง'; status.style.color = '#e67e22'; }
+            setTimeout(function(){ if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2500);
+        }
     }
 
     function updateStockUI() {
@@ -942,7 +963,7 @@
         const container = document.getElementById('week-summary-list');
         let html = '';
 
-        for (let i = 6; i >= 0; i--) {
+        for (let i = 0; i <= 6; i++) {
             const d = new Date(anchor);
             d.setDate(anchor.getDate() - i);
             const thaiDateStr = d.toLocaleDateString('th-TH');
@@ -1288,7 +1309,7 @@
                     let q = bag.qty || 1;
                     itemCounts[bag.name] = (itemCounts[bag.name] || 0) + q;
                     if (bag.toppings) bag.toppings.forEach(t => { let tn = `Topping: ${t}`; itemCounts[tn] = (itemCounts[tn] || 0) + q; });
-                    if (bag.name.includes("น้ำเต้าหู้เข้มข้น")) salesByStock.soy     += (bag.name.includes("400") ? 400 : 300) * q;
+                    if (bag.name.includes("น้ำเต้าหู้")) salesByStock.soy     += (bag.name.includes("400") ? 400 : 300) * q;
                     if (bag.name.includes("น้ำขิง"))             salesByStock.ginger  += (bag.name.includes("400") ? 400 : 300) * q;
                     if (bag.name.includes("ซุปงาดำ"))            salesByStock.sesame  += 250 * q;
                     if (bag.name.includes("สังขยา"))             salesByStock.custard += q;
@@ -1577,7 +1598,7 @@
     function getSoldForISO(iso,item) {
         if (snapshots[iso]&&snapshots[iso].sold&&snapshots[iso].sold[item]!==undefined) return snapshots[iso].sold[item];
         var td=new Date(iso+'T00:00:00').toLocaleDateString('th-TH'); var sold=0;
-        (db.orders||[]).filter(function(o){return o.date===td&&o.status==='เสร็จสิ้น';}).forEach(function(o){
+        (db.orders||[]).filter(function(o){return o.date===td&&o.status!=='ยกเลิก';}).forEach(function(o){
             if(!o.raw_details)return;
             o.raw_details.forEach(function(bag){
                 var q=bag.qty||1;
@@ -1692,7 +1713,7 @@
         var dates = getChartDates();
         var labels = dates.map(cLabel);
         if (dates.length === 0) { clearCanvas('c-stock','📅 เลือกช่วงวันที่ แล้วกด "ดูกราฟ"'); return; }
-        var cost = dates.map(function(iso){ return (snapshots[iso]&&snapshots[iso].stock)?snapshots[iso].stock[item]||0:0; });
+        var cost = dates.map(function(iso){ return (snapshots[iso]&&snapshots[iso].stock&&snapshots[iso].stock[item]!==undefined) ? snapshots[iso].stock[item] : (db.stock[item]||0); });
         var sold = dates.map(function(iso){ return getSoldForISO(iso,item); });
         drawBars('c-stock',
             [{ label:'ต้นทุน', data:cost, color:'rgba(212,175,55,0.85)' },
