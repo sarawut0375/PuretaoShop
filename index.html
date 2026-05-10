@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Puretao V8.6 - Stock System</title>
+    <title>Puretao V8.7 - Stock System</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --dark: #2D1400; --cream: #FAF7F2; --white: #FFFFFF; --border: #E8D5C4; --secondary: #8B4513; --success: #28a745; --pending: #ffc107; --danger: #dc3545; }
@@ -195,6 +195,12 @@
         .snap-auto-badge { display: inline-block; font-size: 9px; background: #e8f5e9; color: var(--success); border-radius: 4px; padding: 1px 5px; margin-left: 4px; font-weight: 600; }
         .snap-manual-badge { display: inline-block; font-size: 9px; background: #e3f2fd; color: #1976d2; border-radius: 4px; padding: 1px 5px; margin-left: 4px; font-weight: 600; }
 
+        /* ===== Compact stock input grid ===== */
+        .stock-compact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 4px; }
+        .sc-item { display: flex; flex-direction: column; align-items: center; background: #faf9f6; border: 1px solid #eeddd0; border-radius: 8px; padding: 5px 4px; }
+        .sc-item span { font-size: 9px; font-weight: 700; color: var(--secondary); margin-bottom: 3px; text-align: center; line-height: 1.2; }
+        .sc-item input { width: 100%; padding: 4px 5px; font-size: 13px; font-family: inherit; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 0; text-align: center; }
+
         /* ===== Chart Cards ===== */
         .chart-range-bar { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
         .chart-range-btn { border: 1px solid var(--border); background: #f5f5f5; color: #666; font-size: 11px; font-weight: 700; padding: 6px 14px; border-radius: 20px; cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
@@ -206,9 +212,24 @@
         .chart-custom-inputs .ci label { font-size: 10px; color: #888; display: block; margin-bottom: 3px; }
         .chart-custom-inputs input[type=date] { width: 100%; padding: 7px 8px; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 0; font-family: inherit; background: white; }
         .chart-apply-btn { background: var(--gold); color: white; border: none; border-radius: 8px; padding: 7px 12px; font-size: 11px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-        .chart-canvas-wrap { width: 100%; height: 200px; margin-top: 6px; position: relative; }
+        .chart-canvas-wrap { width: 100%; height: 220px; margin-top: 6px; position: relative; }
         .chart-canvas-wrap canvas { display: block; width: 100%; height: 100%; }
-        .stock-item-select { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; font-family: inherit; color: var(--dark); background: #fafafa; margin-bottom: 8px; cursor: pointer; }
+
+        /* ===== Line Chart Legend ===== */
+        .line-chart-legend { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-bottom: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #555; }
+        .legend-line { width: 20px; height: 2px; display: inline-block; flex-shrink: 0; }
+        .legend-line.dashed { background: repeating-linear-gradient(to right, currentColor 0, currentColor 4px, transparent 4px, transparent 8px); }
+
+        /* ===== Group Tab Selector ===== */
+        .group-tab-bar { display: flex; gap: 4px; margin-bottom: 10px; }
+        .group-tab-btn { flex: 1; border: 1px solid var(--border); background: #f5f5f5; color: #666; font-size: 10px; font-weight: 700; padding: 7px 4px; border-radius: 10px; cursor: pointer; font-family: inherit; transition: all 0.15s; text-align: center; }
+        .group-tab-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+        /* Clear orders date picker */
+        .clear-orders-datepicker { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px dashed var(--secondary); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+        .clear-orders-datepicker label { font-size: 12px; font-weight: 700; color: var(--secondary); white-space: nowrap; flex-shrink: 0; }
+        .clear-orders-datepicker input[type="date"] { flex: 1; padding: 6px 8px; font-size: 13px; margin-bottom: 0; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; min-width: 0; }
     </style>
 </head>
 <body>
@@ -260,8 +281,6 @@
 
     <!-- Page: History -->
     <div id="history-page" class="page">
-
-        <!-- Day Navigation Bar -->
         <div class="hist-day-nav">
             <button class="hist-nav-btn" id="btn-hist-prev" onclick="changeHistoryDay(-1)">◀</button>
             <div class="hist-date-center" id="hist-date-center-click" onclick="triggerHistDatePicker()">
@@ -273,12 +292,9 @@
             <button class="hist-nav-btn" id="btn-hist-next" onclick="changeHistoryDay(1)">▶</button>
             <button class="btn-hist-today" id="btn-hist-today-main" onclick="historyGoToday()">วันนี้</button>
         </div>
-        <!-- Staff: today-only notice -->
         <div id="staff-today-notice" style="display:none; background:#fff8e1; border-bottom:1px solid #ffe082; padding:6px 15px; font-size:11px; color:#8B6914; text-align:center;">
             🔒 คนขายดูได้เฉพาะออเดอร์วันนี้เท่านั้น
         </div>
-
-        <!-- Admin day summary boxes -->
         <div id="admin-day-summary" style="display:none;">
             <div class="hist-day-summary">
                 <div class="hist-day-sum-item success-item">
@@ -295,13 +311,10 @@
                 </div>
             </div>
         </div>
-
-        <!-- Customer day total -->
         <div id="user-day-info" style="display:none; margin:8px 12px 0; padding:10px; background:var(--white); border-radius:12px; border-left:4px solid var(--gold);">
             <small>ยอดสั่งของคุณวันนี้:</small>
             <div class="dash-val" id="user-day-total">฿0</div>
         </div>
-
         <div id="orders-list-ui" style="padding:8px;"></div>
     </div>
 
@@ -310,7 +323,7 @@
         <div style="padding:16px 15px 8px;"><h2 style="font-size:17px; font-weight:800; color:var(--dark);">📊 ประวัติการขาย</h2></div>
         <div style="padding:0 15px;">
 
-            <!-- ===== CHART RANGE (shared) ===== -->
+            <!-- CHART RANGE (shared) -->
             <div class="card" style="border-color:var(--gold); background:#fffcf5; padding:10px 12px;">
                 <div style="font-size:12px; font-weight:800; color:var(--secondary); margin-bottom:8px;">📅 ช่วงเวลากราฟ</div>
                 <div class="chart-range-bar">
@@ -327,50 +340,86 @@
                 </div>
             </div>
 
-            <!-- ===== CHART 1: Revenue ===== -->
+            <!-- CHART 1: Revenue Line -->
             <div class="card" style="border-color:#28a745; background:#f6fff8;">
                 <h4 style="font-size:14px; color:#1a7a30; margin-bottom:6px;">📈 ยอดขายรวมต่อวัน (฿)</h4>
                 <div class="chart-canvas-wrap"><canvas id="c-revenue"></canvas></div>
             </div>
 
-            <!-- ===== CHART 2: Stock vs Sold ===== -->
+            <!-- 7-DAY HISTORY — moved here, just below revenue chart -->
+            <div class="card" style="border-color: var(--gold); background: #fffcf0; margin-bottom: 8px;">
+                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 12px;">📅 ดูข้อมูลย้อนหลัง 7 วัน</h4>
+                <div class="hist-datepicker-row">
+                    <label>📆 วันที่สิ้นสุด:</label>
+                    <input type="date" id="history-anchor-date" onchange="buildWeekSummary()">
+                    <button class="btn-goto-today" onclick="gotoToday()">วันนี้</button>
+                </div>
+                <div id="week-summary-list"></div>
+            </div>
+
+            <!-- CHART 2: Stock vs Sold — GROUPED BAR CHART, 3 Groups -->
             <div class="card" style="border-color:var(--secondary); background:#fff8f0;">
-                <h4 style="font-size:14px; color:var(--secondary); margin-bottom:6px;">📦 ต้นทุน &amp; ยอดขายสินค้าต่อวัน</h4>
-                <select class="stock-item-select" id="cr-stock-item" onchange="renderStockChart()">
-                    <option value="soy">น้ำเต้าหู้เข้มข้น (ml)</option>
-                    <option value="ginger">น้ำขิง (ml)</option>
-                    <option value="sesame">ซุปงาดำ (ml)</option>
-                    <option value="custard">สังขยาใบเตย (ถ้วย)</option>
-                    <option value="patongko">ปาท่องโก๋ (ชิ้น)</option>
-                    <option value="mantou">หมั่นโถนมสด (ชิ้น)</option>
-                </select>
+                <h4 style="font-size:14px; color:var(--secondary); margin-bottom:8px;">📦 ต้นทุน &amp; ยอดขายสินค้าต่อวัน</h4>
+                <div class="group-tab-bar">
+                    <button class="group-tab-btn active" id="gtab-1" onclick="setStockGroup(1)">กลุ่ม 1<br><span style="font-size:9px; font-weight:400;">น้ำดื่ม</span></button>
+                    <button class="group-tab-btn" id="gtab-2" onclick="setStockGroup(2)">กลุ่ม 2<br><span style="font-size:9px; font-weight:400;">ของแห้ง</span></button>
+                    <button class="group-tab-btn" id="gtab-3" onclick="setStockGroup(3)">กลุ่ม 3<br><span style="font-size:9px; font-weight:400;">ท็อปปิ้ง</span></button>
+                </div>
+                <div id="stock-bar-legend" class="line-chart-legend" style="margin-bottom:4px;"></div>
+                <div style="font-size:9px; color:#aaa; margin-bottom:6px;">
+                    █ แท่งทึบ = ต้นทุน &nbsp;|&nbsp; ░ แท่งจาง = ยอดขาย
+                </div>
                 <div class="chart-canvas-wrap"><canvas id="c-stock"></canvas></div>
             </div>
 
-            <!-- Stock Input Section -->
-            <div class="card" style="border-color: var(--gold); background: #fff;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h4 style="font-size: 14px; color: var(--secondary);">📦 กำหนดจำนวนต้นทุนต่อวัน</h4>
-                    <span id="stock-save-status" style="font-size:11px; color:#aaa;"></span>
+            <!-- Stock Input Section — compact collapsible -->
+            <div class="card" style="border-color: var(--gold); background: #fff; padding:10px 12px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; cursor:pointer; user-select:none;"
+                     onclick="toggleStockInput()">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span style="font-size:13px;">📦</span>
+                        <span style="font-size:13px; font-weight:700; color:var(--secondary);">กำหนดจำนวนต้นทุนต่อวัน</span>
+                        <span id="stock-save-status" style="font-size:10px; color:#aaa;"></span>
+                    </div>
+                    <span id="stock-panel-arrow" style="font-size:13px; color:var(--secondary);">▼</span>
                 </div>
-                <div class="stock-grid">
-                    <div class="stock-input-group"><label>1. น้ำเต้าหู้ (ml)</label><input type="number" id="stock-soy" placeholder="0"></div>
-                    <div class="stock-input-group"><label>2. น้ำขิง (ml)</label><input type="number" id="stock-ginger" placeholder="0"></div>
-                    <div class="stock-input-group"><label>3. ซุปงาดำ (ml)</label><input type="number" id="stock-sesame" placeholder="0"></div>
-                    <div class="stock-input-group"><label>4. สังขยา (ถ้วย/90ml)</label><input type="number" id="stock-custard" placeholder="0"></div>
-                    <div class="stock-input-group"><label>5. ปาท่องโก๋ (ชิ้น)</label><input type="number" id="stock-patongko" placeholder="0"></div>
-                    <div class="stock-input-group"><label>6. หมั่นโถ (ชิ้น)</label><input type="number" id="stock-mantou" placeholder="0"></div>
+                <div id="stock-input-body" style="display:none; margin-top:10px;">
+                    <div style="font-size:10px; font-weight:700; color:var(--secondary); margin:4px 0; padding:2px 6px; background:#fff8f0; border-radius:4px;">กลุ่ม 1 — น้ำดื่ม</div>
+                    <div class="stock-compact-grid">
+                        <div class="sc-item"><span>น้ำเต้าหู้</span><input type="number" id="stock-soy" placeholder="0"></div>
+                        <div class="sc-item"><span>น้ำขิง</span><input type="number" id="stock-ginger" placeholder="0"></div>
+                        <div class="sc-item"><span>ซุปงาดำ</span><input type="number" id="stock-sesame" placeholder="0"></div>
+                    </div>
+                    <div style="font-size:10px; font-weight:700; color:var(--secondary); margin:6px 0 4px; padding:2px 6px; background:#fff8f0; border-radius:4px;">กลุ่ม 2 — ของแห้ง</div>
+                    <div class="stock-compact-grid">
+                        <div class="sc-item"><span>สังขยา</span><input type="number" id="stock-custard" placeholder="0"></div>
+                        <div class="sc-item"><span>ปาท่องโก๋</span><input type="number" id="stock-patongko" placeholder="0"></div>
+                        <div class="sc-item"><span>หมั่นโถ</span><input type="number" id="stock-mantou" placeholder="0"></div>
+                    </div>
+                    <div style="font-size:10px; font-weight:700; color:var(--secondary); margin:6px 0 4px; padding:2px 6px; background:#fff8f0; border-radius:4px;">กลุ่ม 3 — ท็อปปิ้ง</div>
+                    <div class="stock-compact-grid">
+                        <div class="sc-item"><span>วุ้น</span><input type="number" id="stock-jelly" placeholder="0"></div>
+                        <div class="sc-item"><span>เม็ดแมงลัก</span><input type="number" id="stock-basil" placeholder="0"></div>
+                        <div class="sc-item"><span>ลูกเดือย</span><input type="number" id="stock-barley" placeholder="0"></div>
+                        <div class="sc-item"><span>ถั่วแดง</span><input type="number" id="stock-redbeans" placeholder="0"></div>
+                        <div class="sc-item"><span>ถั่วดำ</span><input type="number" id="stock-blackbeans" placeholder="0"></div>
+                        <div class="sc-item"><span>แปะก๊วย</span><input type="number" id="stock-ginkgo" placeholder="0"></div>
+                        <div class="sc-item"><span>ธัญพืช 6</span><input type="number" id="stock-grain6" placeholder="0"></div>
+                        <div class="sc-item"><span>เต้าฮวย</span><input type="number" id="stock-tofu" placeholder="0"></div>
+                    </div>
+                    <button onclick="saveStock()" id="btn-save-stock"
+                        style="width:100%; background:var(--secondary); color:white; border:none; padding:9px; border-radius:10px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; margin-top:8px;">
+                        💾 บันทึกต้นทุน
+                    </button>
                 </div>
-                <button onclick="saveStock()" id="btn-save-stock"
-                    style="width:100%; background:var(--secondary); color:white; border:none; padding:12px; border-radius:12px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; margin-top:4px; display:flex; align-items:center; justify-content:center; gap:8px;">
-                    💾 บันทึกต้นทุน
-                </button>
             </div>
+
             <!-- Sales Summary -->
             <div id="manage-summary-section" class="card" style="border-color: var(--gold); background: #fff;">
                 <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 5px;">📊 สรุปยอดคงเหลือ (ต้นทุน - ขาย = คงเหลือ)</h4>
                 <div id="item-sales-summary"></div>
             </div>
+
             <!-- SNAPSHOT HISTORY -->
             <div class="card" style="border-color: var(--secondary); background: #fff8f0; margin-bottom: 8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -382,20 +431,16 @@
                 </div>
                 <div id="snapshot-history-list"><p style="font-size:12px; color:#bbb; text-align:center; padding:15px;">กำลังโหลด...</p></div>
             </div>
-            <!-- 7-DAY HISTORY -->
-            <div class="card" style="border-color: var(--gold); background: #fffcf0; margin-bottom: 8px;">
-                <h4 style="font-size: 14px; color: var(--secondary); margin-bottom: 12px;">📅 ดูข้อมูลย้อนหลัง 7 วัน</h4>
-                <div class="hist-datepicker-row">
-                    <label>📆 วันที่สิ้นสุด:</label>
-                    <input type="date" id="history-anchor-date" onchange="buildWeekSummary()">
-                    <button class="btn-goto-today" onclick="gotoToday()">วันนี้</button>
-                </div>
-                <div id="week-summary-list"></div>
-            </div>
-            <!-- ล้างออเดอร์ -->
+
+            <!-- ล้างออเดอร์ — เลือกวันที่ได้เอง -->
             <div class="card" style="border-color: var(--danger); background: #fff5f5;">
                 <h4 style="font-size:13px; color:var(--danger); margin-bottom:10px;">🗑️ จัดการล้างออเดอร์</h4>
-                <p style="font-size:11px; color:#999; margin-bottom:10px;">คลิก "รายละเอียด" ของวันในส่วนด้านบนเพื่อเลือกวัน แล้วกดล้างด้านล่าง</p>
+                <div class="clear-orders-datepicker">
+                    <label>📆 เลือกวัน:</label>
+                    <input type="date" id="manage-date-filter-picker"
+                        onchange="onClearDateChange(this.value)"
+                        style="flex:1; padding:8px; font-size:13px; margin-bottom:0; border:1px solid var(--border); border-radius:8px;">
+                </div>
                 <input type="hidden" id="manage-date-filter">
                 <div id="selected-date-label" style="font-size:12px; color:var(--secondary); font-weight:700; margin-bottom:10px; padding:6px 10px; background:#fff; border-radius:8px; border:1px dashed var(--secondary);">ยังไม่ได้เลือกวัน</div>
                 <button class="btn-main" style="background:var(--secondary); margin-bottom:8px; font-size:13px;" onclick="clearOrdersByDate()">ล้างออเดอร์เฉพาะวันที่เลือก</button>
@@ -495,7 +540,8 @@
     let db = {
         shop: { name:"PureTao", sub:"สดใหม่เพื่อสุขภาพ", logo:"", pp:"0000000000", qr_type:"promptpay", custom_qr:"" },
         menus: [], orders: [],
-        stock: { soy:0, ginger:0, sesame:0, custard:0, patongko:0, mantou:0 }
+        stock: { soy:0, ginger:0, sesame:0, custard:0, patongko:0, mantou:0,
+                 jelly:0, basil:0, barley:0, redbeans:0, blackbeans:0, ginkgo:0, grain6:0, tofu:0 }
     };
 
     let bags = []; let activeSelection = {};
@@ -503,12 +549,35 @@
     let tempMImg = ""; let tempOImg = ""; let tempLogoImg = ""; let tempQRImg = "";
     let tempOpts = []; let isInitialLoadDone = false;
     let selectedWeekDate = null;
-    let snapshots = {};           // daily snapshots { "YYYY-MM-DD": {...} }
-    let lastAutoSnapshotDate = null; // prevent duplicate auto-saves
+    let snapshots = {};
+    let lastAutoSnapshotDate = null;
 
-    // ---- History page: selected date ----
-    let historyDate = new Date(); // JS Date object for history page
-    let historyDateStr = "";      // Thai locale string
+    let historyDate = new Date();
+    let historyDateStr = "";
+
+    // ===== Stock groups definition =====
+    const STOCK_GROUP_1 = [
+        { id:'soy',      label:'น้ำเต้าหู้เข้มข้น', unit:'ml',   color:'#1565C0' },
+        { id:'ginger',   label:'น้ำขิง',              unit:'ml',   color:'#E65100' },
+        { id:'sesame',   label:'ซุปงาดำ',             unit:'ml',   color:'#4A148C' }
+    ];
+    const STOCK_GROUP_2 = [
+        { id:'custard',  label:'สังขยาใบเตย',         unit:'ถ้วย', color:'#2E7D32' },
+        { id:'patongko', label:'ปาท่องโก๋',           unit:'ชิ้น', color:'#F57F17' },
+        { id:'mantou',   label:'หมั่นโถนมสด',         unit:'ชิ้น', color:'#880E4F' }
+    ];
+    const STOCK_GROUP_3 = [
+        { id:'jelly',      label:'วุ้น',             unit:'ชิ้น', color:'#00838F' },
+        { id:'basil',      label:'เม็ดแมงลัก',       unit:'ถ้วย', color:'#558B2F' },
+        { id:'barley',     label:'ลูกเดือย',         unit:'ถ้วย', color:'#6D4C41' },
+        { id:'redbeans',   label:'ถั่วแดง',          unit:'ถ้วย', color:'#B71C1C' },
+        { id:'blackbeans', label:'ถั่วดำ',           unit:'ถ้วย', color:'#212121' },
+        { id:'ginkgo',     label:'แปะก๊วย',          unit:'ถ้วย', color:'#F9A825' },
+        { id:'grain6',     label:'ธัญพืช 6 ชนิด',   unit:'ถ้วย', color:'#5D4037' },
+        { id:'tofu',       label:'เต้าฮวย',          unit:'ถ้วย', color:'#37474F' }
+    ];
+
+    let currentStockGroup = 1;
 
     const thDaysShort = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
     const thMonths    = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -546,17 +615,28 @@
         renderMenus();
         if (isAdmin) updateStockUI();
 
-        // Init history date to today
         historyDate = new Date();
         updateHistoryDateUI();
         setAnchorToToday();
 
-        // Auto-snapshot: ตรวจทุก 30 วิ
-        setInterval(checkAutoSnapshot, 30000);
+        // Set today as default for clear orders date picker
+        const pickerEl = document.getElementById('manage-date-filter-picker');
+        if (pickerEl) pickerEl.value = isoFromDate(new Date());
 
-        // Recovery: กู้คืน snapshot ที่หายไป (admin only)
+        setInterval(checkAutoSnapshot, 30000);
         if (isAdmin) await checkMissingSnapshots();
     };
+
+    // =============================================
+    //  CLEAR ORDERS DATE PICKER
+    // =============================================
+    function onClearDateChange(isoVal) {
+        if (!isoVal) return;
+        const d = new Date(isoVal + 'T00:00:00');
+        const thaiDateStr = d.toLocaleDateString('th-TH');
+        document.getElementById('manage-date-filter').value = isoVal;
+        document.getElementById('selected-date-label').textContent = `วันที่เลือก: ${thaiDateStr}`;
+    }
 
     // =============================================
     //  HISTORY PAGE — DAY NAVIGATION
@@ -566,9 +646,7 @@
     }
 
     function updateHistoryDateUI() {
-        // Staff is always locked to today
         if (isStaff) historyDate = new Date();
-
         historyDateStr = historyDate.toLocaleDateString('th-TH');
         const todayStr = new Date().toLocaleDateString('th-TH');
         const isToday  = historyDateStr === todayStr;
@@ -580,14 +658,13 @@
         const lbl = document.getElementById('history-date-label');
         if (lbl) lbl.textContent = label;
 
-        // Staff: disable all navigation
-        const prevBtn    = document.getElementById('btn-hist-prev');
-        const nextBtn    = document.getElementById('btn-hist-next');
-        const todayBtn   = document.getElementById('btn-hist-today-main');
+        const prevBtn     = document.getElementById('btn-hist-prev');
+        const nextBtn     = document.getElementById('btn-hist-next');
+        const todayBtn    = document.getElementById('btn-hist-today-main');
         const centerClick = document.getElementById('hist-date-center-click');
-        const hint       = document.getElementById('hist-date-hint');
-        const notice     = document.getElementById('staff-today-notice');
-        const picker     = document.getElementById('history-page-date');
+        const hint        = document.getElementById('hist-date-hint');
+        const notice      = document.getElementById('staff-today-notice');
+        const picker      = document.getElementById('history-page-date');
 
         if (isStaff) {
             if (prevBtn)    { prevBtn.disabled = true; prevBtn.style.opacity = '0.2'; }
@@ -609,11 +686,11 @@
     }
 
     function changeHistoryDay(delta) {
-        if (isStaff) return; // staff: today only
+        if (isStaff) return;
         const d = new Date(historyDate);
         d.setDate(d.getDate() + delta);
         const today = new Date(); today.setHours(23,59,59,999);
-        if (d > today) return; // no future
+        if (d > today) return;
         historyDate = d;
         updateHistoryDateUI();
         renderOrders();
@@ -626,7 +703,7 @@
     }
 
     function setHistoryDateFromPicker(isoVal) {
-        if (isStaff) return; // staff: today only
+        if (isStaff) return;
         if (!isoVal) return;
         const d = new Date(isoVal + 'T00:00:00');
         const today = new Date(); today.setHours(23,59,59,999);
@@ -644,16 +721,14 @@
     }
 
     // =============================================
-    //  RENDER ORDERS (filtered by historyDate)
+    //  RENDER ORDERS
     // =============================================
     function renderOrders() {
-        updateHistoryDateUI(); // keep label in sync
-
+        updateHistoryDateUI();
         const list      = document.getElementById('orders-list-ui');
         const allOrders = db.orders || [];
         const dayOrders = allOrders.filter(o => o.date === historyDateStr);
 
-        // --- Admin summary boxes ---
         if (isAdmin) {
             const successDay = dayOrders.filter(o => o.status === 'เสร็จสิ้น');
             const cancelDay  = dayOrders.filter(o => o.status === 'ยกเลิก');
@@ -672,13 +747,10 @@
             document.getElementById('user-day-info').style.display    = 'none';
         }
 
-        // --- Decide which orders to show ---
         let show = (isAdmin || isStaff) ? dayOrders : dayOrders.filter(o => o.uid === userId);
 
         if (!show || show.length === 0) {
-            list.innerHTML = `<div class="hist-no-orders">
-                📭<br>ไม่มีออเดอร์ในวันนี้
-            </div>`;
+            list.innerHTML = `<div class="hist-no-orders">📭<br>ไม่มีออเดอร์ในวันนี้</div>`;
             return;
         }
 
@@ -746,18 +818,19 @@
             const cD = await cR.json(), oD = await oR.json(), sD = await sR.json(), snD = await snR.json();
             if (cD) { db.shop = cD.shop || db.shop; db.menus = cD.menus || []; db.menus.sort((a,b) => (a.order||0)-(b.order||0)); }
             db.orders = oD || [];
-            db.stock  = sD || db.stock;
+            // Merge fetched stock with defaults (to include new group3 fields)
+            if (sD) db.stock = Object.assign({}, db.stock, sD);
             snapshots = snD || {};
             document.getElementById('cloud-status').textContent = "Sync: Connected ✅";
         } catch (e) {
             document.getElementById('cloud-status').textContent = "Sync: Offline ⚠️";
-            const local = localStorage.getItem('puretao_v8.3_db');
+            const local = localStorage.getItem('puretao_v8.7_db');
             if (local) { const p = JSON.parse(local); db = p.db || db; snapshots = p.snapshots || {}; }
         }
     }
 
     function saveLocal() {
-        localStorage.setItem('puretao_v8.3_db', JSON.stringify({ db, snapshots }));
+        localStorage.setItem('puretao_v8.7_db', JSON.stringify({ db, snapshots }));
     }
 
     async function saveContent() {
@@ -783,15 +856,14 @@
     // =============================================
     //  DAILY SNAPSHOT SYSTEM
     // =============================================
-
-    /** คำนวณ snapshot ของวันหนึ่งจากข้อมูล orders + stock ปัจจุบัน */
     function calcDaySnapshot(isoDate, trigger) {
         const thaiDate      = new Date(isoDate + 'T00:00:00').toLocaleDateString('th-TH');
         const dayOrders     = (db.orders || []).filter(o => o.date === thaiDate);
         const successOrders = dayOrders.filter(o => o.status === 'เสร็จสิ้น');
         const cancelOrders  = dayOrders.filter(o => o.status === 'ยกเลิก');
 
-        let sold = { soy:0, ginger:0, sesame:0, custard:0, patongko:0, mantou:0 };
+        let sold = { soy:0, ginger:0, sesame:0, custard:0, patongko:0, mantou:0,
+                     jelly:0, basil:0, barley:0, redbeans:0, blackbeans:0, ginkgo:0, grain6:0, tofu:0 };
         successOrders.forEach(o => {
             if (!o.raw_details) return;
             o.raw_details.forEach(bag => {
@@ -802,36 +874,41 @@
                 if (bag.name.includes("สังขยา"))     sold.custard  += q;
                 if (bag.name.includes("ปาท่องโก๋")) sold.patongko += q;
                 if (bag.name.includes("หมั่นโถ"))    sold.mantou   += q;
+                // Group 3 toppings — matched by topping name
+                if (bag.toppings) bag.toppings.forEach(t => {
+                    if (t.includes("วุ้น"))           sold.jelly      += q;
+                    if (t.includes("เม็ดแมงลัก"))    sold.basil      += q;
+                    if (t.includes("ลูกเดือย"))       sold.barley     += q;
+                    if (t.includes("ถั่วแดง"))        sold.redbeans   += q;
+                    if (t.includes("ถั่วดำ"))         sold.blackbeans += q;
+                    if (t.includes("แปะก๊วย"))       sold.ginkgo     += q;
+                    if (t.includes("ธัญ"))            sold.grain6     += q;
+                    if (t.includes("เต้าฮวย"))       sold.tofu       += q;
+                });
             });
         });
 
         return {
-            date_thai  : thaiDate,
-            stock      : { ...db.stock },
+            date_thai: thaiDate,
+            stock    : { ...db.stock },
             sold,
-            revenue    : successOrders.reduce((a,b) => a + b.total, 0),
-            orders     : successOrders.length,
-            cancelled  : cancelOrders.length,
-            trigger    : trigger || 'auto',   // 'auto' | 'manual' | 'recovery'
-            saved_at   : new Date().toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' })
+            revenue  : successOrders.reduce((a,b) => a + b.total, 0),
+            orders   : successOrders.length,
+            cancelled: cancelOrders.length,
+            trigger  : trigger || 'auto',
+            saved_at : new Date().toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' })
         };
     }
 
-    /** บันทึก snapshot ของวันหนึ่งลง Firebase */
     async function saveSnapshot(isoDate, trigger) {
         const snap = calcDaySnapshot(isoDate, trigger);
         snapshots[isoDate] = snap;
         try {
-            // PATCH = merge เฉพาะ key นั้น ไม่ล้างวันอื่น
             await fetch(SNAPSHOTS_URL, { method:'PATCH', body: JSON.stringify({ [isoDate]: snap }) });
             saveLocal();
-            console.log(`[Snapshot] saved ${isoDate} (${trigger})`);
-        } catch(e) {
-            saveLocal(); // at least save locally
-        }
+        } catch(e) { saveLocal(); }
     }
 
-    /** เรียกทุก 30 วิ — บันทึกอัตโนมัติเวลา 23:59 */
     function checkAutoSnapshot() {
         if (!isAdmin || !isInitialLoadDone) return;
         const now      = new Date();
@@ -839,33 +916,25 @@
         if (now.getHours() === 23 && now.getMinutes() === 59 && lastAutoSnapshotDate !== todayISO) {
             lastAutoSnapshotDate = todayISO;
             saveSnapshot(todayISO, 'auto');
-            const cs = document.getElementById('cloud-status');
-            if (cs) cs.textContent = "Sync: Snapshot 23:59 ✅";
         }
     }
 
-    /** เรียกตอน load — กู้คืน snapshot ที่หายไปของวันก่อนหน้า */
     async function checkMissingSnapshots() {
         if (!isAdmin) return;
         const today = new Date();
-        // ตรวจย้อนหลัง 7 วัน (เผื่อปิด app หลายวัน)
         for (let i = 1; i <= 7; i++) {
             const d   = new Date(today);
             d.setDate(today.getDate() - i);
             const iso = isoFromDate(d);
             if (!snapshots[iso]) {
-                // มีออเดอร์วันนั้นหรือไม่
-                const thaiDate = d.toLocaleDateString('th-TH');
+                const thaiDate  = d.toLocaleDateString('th-TH');
                 const hasOrders = (db.orders || []).some(o => o.date === thaiDate);
-                if (hasOrders) {
-                    await saveSnapshot(iso, 'recovery');
-                }
+                if (hasOrders) await saveSnapshot(iso, 'recovery');
             }
         }
         renderSnapshotHistory();
     }
 
-    /** บันทึก snapshot วันนี้ทันที (ปุ่ม manual) */
     async function manualSaveSnapshot() {
         if (!isAdmin) return;
         const todayISO = isoFromDate(new Date());
@@ -879,41 +948,53 @@
         const btn    = document.getElementById('btn-save-stock');
         const status = document.getElementById('stock-save-status');
         if (btn) { btn.disabled = true; btn.innerHTML = '⏳ กำลังบันทึก...'; }
+        // Group 1
         db.stock.soy      = parseInt(document.getElementById('stock-soy').value)      || 0;
         db.stock.ginger   = parseInt(document.getElementById('stock-ginger').value)   || 0;
         db.stock.sesame   = parseInt(document.getElementById('stock-sesame').value)   || 0;
+        // Group 2
         db.stock.custard  = parseInt(document.getElementById('stock-custard').value)  || 0;
         db.stock.patongko = parseInt(document.getElementById('stock-patongko').value) || 0;
         db.stock.mantou   = parseInt(document.getElementById('stock-mantou').value)   || 0;
+        // Group 3
+        db.stock.jelly      = parseInt(document.getElementById('stock-jelly').value)      || 0;
+        db.stock.basil      = parseInt(document.getElementById('stock-basil').value)      || 0;
+        db.stock.barley     = parseInt(document.getElementById('stock-barley').value)     || 0;
+        db.stock.redbeans   = parseInt(document.getElementById('stock-redbeans').value)   || 0;
+        db.stock.blackbeans = parseInt(document.getElementById('stock-blackbeans').value) || 0;
+        db.stock.ginkgo     = parseInt(document.getElementById('stock-ginkgo').value)     || 0;
+        db.stock.grain6     = parseInt(document.getElementById('stock-grain6').value)     || 0;
+        db.stock.tofu       = parseInt(document.getElementById('stock-tofu').value)       || 0;
+
         try {
             await fetch(STOCK_URL, { method:'PUT', body: JSON.stringify(db.stock) });
             saveLocal();
-            var todayKey = isoFromDate(new Date());
-            if (snapshots[todayKey]) { snapshots[todayKey].stock = Object.assign({}, db.stock); }
+            const todayKey = isoFromDate(new Date());
+            if (snapshots[todayKey]) snapshots[todayKey].stock = Object.assign({}, db.stock);
             updateSalesSummary();
             renderStockChart();
             if (btn)    { btn.disabled = false; btn.innerHTML = '✅ บันทึกสำเร็จ'; }
-            if (status) { status.textContent = 'บันทึกแล้ว ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); }
-            setTimeout(function(){ if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2000);
+            if (status) status.textContent = 'บันทึกแล้ว ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+            setTimeout(() => { if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2000);
         } catch(e) {
             saveLocal();
-            var todayKey = isoFromDate(new Date());
-            if (snapshots[todayKey]) { snapshots[todayKey].stock = Object.assign({}, db.stock); }
+            const todayKey = isoFromDate(new Date());
+            if (snapshots[todayKey]) snapshots[todayKey].stock = Object.assign({}, db.stock);
             updateSalesSummary();
             renderStockChart();
             if (btn)    { btn.disabled = false; btn.innerHTML = '⚠️ บันทึกเฉพาะเครื่อง'; }
             if (status) { status.textContent = 'ออฟไลน์ — บันทึกในเครื่อง'; status.style.color = '#e67e22'; }
-            setTimeout(function(){ if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2500);
+            setTimeout(() => { if(btn) btn.innerHTML = '💾 บันทึกต้นทุน'; }, 2500);
         }
     }
 
     function updateStockUI() {
-        document.getElementById('stock-soy').value      = db.stock.soy;
-        document.getElementById('stock-ginger').value   = db.stock.ginger;
-        document.getElementById('stock-sesame').value   = db.stock.sesame;
-        document.getElementById('stock-custard').value  = db.stock.custard;
-        document.getElementById('stock-patongko').value = db.stock.patongko;
-        document.getElementById('stock-mantou').value   = db.stock.mantou;
+        const fields = ['soy','ginger','sesame','custard','patongko','mantou',
+                        'jelly','basil','barley','redbeans','blackbeans','ginkgo','grain6','tofu'];
+        fields.forEach(f => {
+            const el = document.getElementById('stock-' + f);
+            if (el) el.value = db.stock[f] || 0;
+        });
     }
 
     // =============================================
@@ -939,13 +1020,10 @@
             renderSnapshotHistory();
             setTimeout(renderCharts, 80);
         }
-        if (page === 'manage-page' && isAdmin) {
-            // manage page no longer has stock/summary sections
-        }
     }
 
     // =============================================
-    //  7-DAY SUMMARY (Manage page)
+    //  7-DAY SUMMARY
     // =============================================
     function setAnchorToToday() {
         const t   = new Date();
@@ -961,30 +1039,26 @@
     function buildWeekSummary() {
         const anchorInput = document.getElementById('history-anchor-date');
         if (!anchorInput.value) anchorInput.value = isoFromDate(new Date());
-
-        const anchor   = new Date(anchorInput.value + 'T00:00:00');
-        const todayStr = new Date().toLocaleDateString('th-TH');
+        const anchor    = new Date(anchorInput.value + 'T00:00:00');
+        const todayStr  = new Date().toLocaleDateString('th-TH');
         const container = document.getElementById('week-summary-list');
         let html = '';
 
         for (let i = 0; i <= 6; i++) {
             const d = new Date(anchor);
             d.setDate(anchor.getDate() - i);
-            const thaiDateStr = d.toLocaleDateString('th-TH');
-            const isoVal      = isoFromDate(d);
-
-            const dayOrders    = (db.orders || []).filter(o => o.date === thaiDateStr);
+            const thaiDateStr   = d.toLocaleDateString('th-TH');
+            const isoVal        = isoFromDate(d);
+            const dayOrders     = (db.orders || []).filter(o => o.date === thaiDateStr);
             const successOrders = dayOrders.filter(o => o.status === 'เสร็จสิ้น');
             const cancelOrders  = dayOrders.filter(o => o.status === 'ยกเลิก');
             const total         = successOrders.reduce((a,b) => a + b.total, 0);
             const isToday       = thaiDateStr === todayStr;
             const hasOrders     = dayOrders.length > 0;
-
-            const dayLabel    = isToday ? '🔔 วันนี้'
+            const dayLabel      = isToday ? '🔔 วันนี้'
                 : `${thDaysShort[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear()+543}`;
-            const daySubLabel = isToday
+            const daySubLabel   = isToday
                 ? `${thDaysShort[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear()+543}` : '';
-
             const rowClass  = `week-summary-row${isToday ? ' today' : ''}${hasOrders ? ' has-orders' : ''}`;
             const totalText = total > 0 ? `฿${total.toLocaleString()}` : '฿0';
             const totalClass = total > 0 ? 'day-total' : 'day-total zero';
@@ -1017,17 +1091,13 @@
         const btn  = document.getElementById(`btn-detail-${isoVal}`);
         if (!wrap) return;
         const isOpen = wrap.classList.contains('show');
-
         document.querySelectorAll('.day-detail-wrap.show').forEach(el => el.classList.remove('show'));
         document.querySelectorAll('.btn-see-detail.open').forEach(el => { el.classList.remove('open'); el.textContent = 'รายละเอียด'; });
-
         if (!isOpen) {
             wrap.classList.add('show');
             btn.classList.add('open');
             btn.textContent = 'ซ่อน';
             renderDayDetailInRow(isoVal, thaiDateStr, wrap);
-            document.getElementById('manage-date-filter').value = isoVal;
-            document.getElementById('selected-date-label').textContent = `วันที่เลือก: ${thaiDateStr}`;
             selectedWeekDate = isoVal;
         }
     }
@@ -1036,14 +1106,11 @@
         const orders        = (db.orders || []).filter(o => o.date === thaiDateStr);
         const successOrders = orders.filter(o => o.status === 'เสร็จสิ้น');
         const total         = successOrders.reduce((a,b) => a + b.total, 0);
-
         if (orders.length === 0) { container.innerHTML = '<div class="no-orders-msg">ไม่มีออเดอร์ในวันนี้</div>'; return; }
-
         let html = `<div class="day-detail-minibar">
             <span>ยอดขาย: <b style="color:var(--success);">฿${total.toLocaleString()}</b></span>
             <span>ออเดอร์: <b>${orders.length} รายการ</b></span>
         </div>`;
-
         html += orders.map(o => {
             const statusColor = o.status === 'ยกเลิก' ? 'var(--danger)' : o.status === 'เสร็จสิ้น' ? 'var(--success)' : 'var(--pending)';
             const itemsHtml = (o.raw_details || []).map((bag,bi) => {
@@ -1066,7 +1133,6 @@
                 <div class="order-items">${fallback || '<span style="color:#bbb;">ไม่มีรายละเอียด</span>'}</div>
             </div>`;
         }).join('');
-
         container.innerHTML = html;
         updateSalesSummary();
     }
@@ -1081,8 +1147,8 @@
             return;
         }
         list.innerHTML = db.menus.map((m, index) => {
-            const sel      = activeSelection[m.id] || { opts: [] };
-            const inCart   = bags.filter(b => b.id === m.id).reduce((s,b) => s + b.qty, 0);
+            const sel       = activeSelection[m.id] || { opts: [] };
+            const inCart    = bags.filter(b => b.id === m.id).reduce((s,b) => s + b.qty, 0);
             const cartBadge = inCart > 0
                 ? `<span style="background:var(--gold);color:white;border-radius:10px;padding:1px 8px;font-size:10px;font-weight:700;margin-left:6px;">🛒 ${inCart}</span>`
                 : '';
@@ -1090,7 +1156,6 @@
             const addBtnLabel = sel.opts.length > 0
                 ? `+ เพิ่มลงตะกร้า <small style="opacity:.8">(+${sel.opts.length} ท็อปปิ้ง)</small>`
                 : '+ เพิ่มลงตะกร้า';
-
             return `<div class="card" id="menu-card-${m.id}">
                 <div style="display:flex; gap:12px; align-items:center;">
                     <img src="${m.img || 'https://via.placeholder.com/100'}" style="width:75px; height:75px; border-radius:12px; object-fit:cover;" onclick="zoom('${m.img}')">
@@ -1130,7 +1195,6 @@
         calculateTotal();
     }
 
-    /** รวมการเพิ่มสินค้าทุกประเภท (มีหรือไม่มีท็อปปิ้ง) ด้วยปุ่มเดียว */
     function addToCartAny(menuId) {
         const menu = db.menus.find(m => m.id === menuId);
         if (!menu) return;
@@ -1139,13 +1203,10 @@
         if (menu.options) menu.options.forEach(o => { if (sel.opts.includes(o.name)) optPrice += o.price; });
         const key = JSON.stringify([...sel.opts].sort());
         let bagIndex = bags.findIndex(b => b.id === menuId && JSON.stringify([...b.opts].sort()) === key);
-        if (bagIndex > -1) {
-            bags[bagIndex].qty += 1;
-        } else {
-            bags.push({ id: menu.id, name: menu.name, price: menu.price, qty: 1, opts: [...sel.opts], optPrice });
-        }
+        if (bagIndex > -1) bags[bagIndex].qty += 1;
+        else bags.push({ id: menu.id, name: menu.name, price: menu.price, qty: 1, opts: [...sel.opts], optPrice });
         if (!activeSelection[menuId]) activeSelection[menuId] = { opts: [] };
-        activeSelection[menuId].opts = [];   // reset topping selection
+        activeSelection[menuId].opts = [];
         renderMenus();
     }
 
@@ -1207,7 +1268,7 @@
         bags = []; activeSelection = {};
         renderMenus();
         alert('✅ ส่งรายการอาหารสำเร็จ');
-        historyDate = new Date(); // go to today
+        historyDate = new Date();
         navTo('history-page');
     }
 
@@ -1217,21 +1278,13 @@
     function renderSnapshotHistory() {
         const container = document.getElementById('snapshot-history-list');
         if (!container) return;
-
-        const entries = Object.entries(snapshots).sort((a, b) => b[0].localeCompare(a[0])); // newest first
+        const entries = Object.entries(snapshots).sort((a, b) => b[0].localeCompare(a[0]));
         if (entries.length === 0) {
             container.innerHTML = '<p style="font-size:12px; color:#bbb; text-align:center; padding:15px;">ยังไม่มีข้อมูล — จะบันทึกครั้งแรกเวลา 23:59</p>';
             return;
         }
 
-        const stockItems = [
-            { id:'soy',      label:'น้ำเต้าหู้เข้มข้น', unit:'ml'   },
-            { id:'ginger',   label:'น้ำขิง',              unit:'ml'   },
-            { id:'sesame',   label:'ซุปงาดำ',             unit:'ml'   },
-            { id:'custard',  label:'สังขยาใบเตย',         unit:'ถ้วย' },
-            { id:'patongko', label:'ปาท่องโก๋',           unit:'ชิ้น' },
-            { id:'mantou',   label:'หมั่นโถนมสด',         unit:'ชิ้น' }
-        ];
+        const allStockItems = [...STOCK_GROUP_1, ...STOCK_GROUP_2, ...STOCK_GROUP_3];
 
         container.innerHTML = entries.map(([isoDate, snap]) => {
             const d        = new Date(isoDate + 'T00:00:00');
@@ -1239,11 +1292,11 @@
             const dayLabel = isToday
                 ? `🔔 วันนี้ — ${thDaysShort[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear()+543}`
                 : `${thDaysShort[d.getDay()]} ${d.getDate()} ${thMonths[d.getMonth()]} ${d.getFullYear()+543}`;
-            const badge = snap.trigger === 'auto'     ? '<span class="snap-auto-badge">อัตโนมัติ</span>'
+            const badge = snap.trigger === 'auto' ? '<span class="snap-auto-badge">อัตโนมัติ</span>'
                         : snap.trigger === 'recovery' ? '<span class="snap-manual-badge">กู้คืน</span>'
                         : '<span class="snap-manual-badge">manual</span>';
 
-            const detailRows = stockItems.map(item => {
+            const detailRows = allStockItems.map(item => {
                 const cost   = (snap.stock && snap.stock[item.id]) || 0;
                 const sold   = (snap.sold  && snap.sold[item.id])  || 0;
                 const remain = cost - sold;
@@ -1283,18 +1336,13 @@
         const btn  = document.getElementById(`snapbtn-${isoDate}`);
         if (!wrap) return;
         const isOpen = wrap.classList.contains('show');
-        // close all
         document.querySelectorAll('.snap-detail-wrap.show').forEach(el => el.classList.remove('show'));
         document.querySelectorAll('.btn-snap-detail.open').forEach(el => { el.classList.remove('open'); el.textContent = 'รายละเอียด'; });
-        if (!isOpen) {
-            wrap.classList.add('show');
-            btn.classList.add('open');
-            btn.textContent = 'ซ่อน';
-        }
+        if (!isOpen) { wrap.classList.add('show'); btn.classList.add('open'); btn.textContent = 'ซ่อน'; }
     }
 
     // =============================================
-    //  SALES SUMMARY (Manage page)
+    //  SALES SUMMARY
     // =============================================
     function updateSalesSummary() {
         const filterDateVal = document.getElementById('manage-date-filter').value;
@@ -1304,8 +1352,10 @@
         const summaryDiv = document.getElementById('item-sales-summary');
         if (!isAdmin) return;
 
-        let salesByStock = { soy:0, ginger:0, sesame:0, custard:0, patongko:0, mantou:0 };
-        let itemCounts   = {};
+        let salesByStock = {};
+        const allItems = [...STOCK_GROUP_1, ...STOCK_GROUP_2, ...STOCK_GROUP_3];
+        allItems.forEach(i => salesByStock[i.id] = 0);
+        let itemCounts = {};
 
         db.orders.forEach(o => {
             if (o.date === targetDateStr && o.status === 'เสร็จสิ้น' && o.raw_details) {
@@ -1313,23 +1363,30 @@
                     let q = bag.qty || 1;
                     itemCounts[bag.name] = (itemCounts[bag.name] || 0) + q;
                     if (bag.toppings) bag.toppings.forEach(t => { let tn = `Topping: ${t}`; itemCounts[tn] = (itemCounts[tn] || 0) + q; });
-                    if (bag.name.includes("น้ำเต้าหู้")) salesByStock.soy     += (bag.name.includes("400") ? 400 : 300) * q;
-                    if (bag.name.includes("น้ำขิง"))             salesByStock.ginger  += (bag.name.includes("400") ? 400 : 300) * q;
-                    if (bag.name.includes("ซุปงาดำ"))            salesByStock.sesame  += 250 * q;
-                    if (bag.name.includes("สังขยา"))             salesByStock.custard += q;
-                    if (bag.name.includes("ปาท่องโก๋"))         salesByStock.patongko += q;
-                    if (bag.name.includes("หมั่นโถ"))            salesByStock.mantou  += q;
+                    if (bag.name.includes("น้ำเต้าหู้")) salesByStock.soy      += (bag.name.includes("400") ? 400 : 300) * q;
+                    if (bag.name.includes("น้ำขิง"))     salesByStock.ginger   += (bag.name.includes("400") ? 400 : 300) * q;
+                    if (bag.name.includes("ซุปงาดำ"))    salesByStock.sesame   += 250 * q;
+                    if (bag.name.includes("สังขยา"))     salesByStock.custard  += q;
+                    if (bag.name.includes("ปาท่องโก๋")) salesByStock.patongko += q;
+                    if (bag.name.includes("หมั่นโถ"))    salesByStock.mantou   += q;
+                    if (bag.toppings) bag.toppings.forEach(t => {
+                        if (t.includes("วุ้น"))           salesByStock.jelly      += q;
+                        if (t.includes("เม็ดแมงลัก"))    salesByStock.basil      += q;
+                        if (t.includes("ลูกเดือย"))       salesByStock.barley     += q;
+                        if (t.includes("ถั่วแดง"))        salesByStock.redbeans   += q;
+                        if (t.includes("ถั่วดำ"))         salesByStock.blackbeans += q;
+                        if (t.includes("แปะก๊วย"))       salesByStock.ginkgo     += q;
+                        if (t.includes("ธัญ"))            salesByStock.grain6     += q;
+                        if (t.includes("เต้าฮวย"))       salesByStock.tofu       += q;
+                    });
                 });
             }
         });
 
-        const stockItems = [
-            { id:'soy',      label:'1. น้ำเต้าหู้เข้มข้น', unit:'ml'    },
-            { id:'ginger',   label:'2. น้ำขิง',              unit:'ml'    },
-            { id:'sesame',   label:'3. ซุปงาดำ',             unit:'ml'    },
-            { id:'custard',  label:'4. สังขยาใบเตย',         unit:'ถ้วย'  },
-            { id:'patongko', label:'5. ปาท่องโก๋',           unit:'ชิ้น'  },
-            { id:'mantou',   label:'6. หมั่นโถนมสด',         unit:'ชิ้น'  }
+        const groups = [
+            { label: 'กลุ่ม 1 — น้ำดื่ม', items: STOCK_GROUP_1 },
+            { label: 'กลุ่ม 2 — ของแห้ง/อาหาร', items: STOCK_GROUP_2 },
+            { label: 'กลุ่ม 3 — ท็อปปิ้ง', items: STOCK_GROUP_3 }
         ];
 
         let html = `<table class="summary-table"><thead><tr>
@@ -1337,16 +1394,19 @@
             <th style="text-align:center;">ขายไป</th><th style="text-align:center;">คงเหลือ</th>
         </tr></thead><tbody>`;
 
-        stockItems.forEach(item => {
-            const cost   = db.stock[item.id] || 0;
-            const sold   = salesByStock[item.id] || 0;
-            const remain = cost - sold;
-            html += `<tr>
-                <td style="font-size:11px;">${item.label}</td>
-                <td style="text-align:center; color:#888;">${cost}</td>
-                <td style="text-align:center; color:var(--danger);">${sold}</td>
-                <td style="text-align:center; font-weight:bold; ${remain < 0 ? 'color:red' : ''}">${remain} ${item.unit}</td>
-            </tr>`;
+        groups.forEach(g => {
+            html += `<tr><th colspan="4" style="background:#f5f0e8; font-size:10px; padding:5px 8px; color:var(--secondary);">${g.label}</th></tr>`;
+            g.items.forEach(item => {
+                const cost   = db.stock[item.id] || 0;
+                const sold   = salesByStock[item.id] || 0;
+                const remain = cost - sold;
+                html += `<tr>
+                    <td style="font-size:11px;">${item.label}</td>
+                    <td style="text-align:center; color:#888;">${cost}</td>
+                    <td style="text-align:center; color:var(--danger);">${sold}</td>
+                    <td style="text-align:center; font-weight:bold; ${remain < 0 ? 'color:red' : ''}">${remain} ${item.unit}</td>
+                </tr>`;
+            });
         });
 
         const toppings = Object.entries(itemCounts).filter(([n]) => n.startsWith("Topping:"));
@@ -1364,8 +1424,8 @@
     // =============================================
     function toggleQRInput() {
         const type = document.getElementById('qr-type').value;
-        document.getElementById('pp-input-group').style.display    = type === 'promptpay' ? 'block' : 'none';
-        document.getElementById('custom-qr-group').style.display   = type === 'custom'    ? 'block' : 'none';
+        document.getElementById('pp-input-group').style.display  = type === 'promptpay' ? 'block' : 'none';
+        document.getElementById('custom-qr-group').style.display = type === 'custom'    ? 'block' : 'none';
     }
 
     function openShopEditModal() {
@@ -1380,12 +1440,12 @@
     }
 
     async function saveShopInfo() {
-        db.shop.name     = document.getElementById('edit-shop-name').value.trim();
-        db.shop.sub      = document.getElementById('edit-shop-sub').value.trim();
-        db.shop.qr_type  = document.getElementById('qr-type').value;
-        db.shop.pp       = document.getElementById('edit-shop-pp').value.trim();
-        if (tempLogoImg) db.shop.logo       = tempLogoImg;
-        if (tempQRImg)   db.shop.custom_qr  = tempQRImg;
+        db.shop.name    = document.getElementById('edit-shop-name').value.trim();
+        db.shop.sub     = document.getElementById('edit-shop-sub').value.trim();
+        db.shop.qr_type = document.getElementById('qr-type').value;
+        db.shop.pp      = document.getElementById('edit-shop-pp').value.trim();
+        if (tempLogoImg) db.shop.logo      = tempLogoImg;
+        if (tempQRImg)   db.shop.custom_qr = tempQRImg;
         await saveContent(); updateShopUI(); closeModal('shop-edit-modal'); alert('บันทึกแล้ว');
     }
 
@@ -1475,7 +1535,7 @@
 
     function enterAsStaffOrAdmin() {
         let p = prompt("รหัสผ่าน:");
-        if      (p === '3o3o3o3o') { isAdmin = true; sessionStorage.setItem('puretao_role', 'admin'); document.getElementById('id-overlay').style.display = 'none'; enableRoleMode('เจ้าของร้าน'); navTo('history-page'); }
+        if      (p === 'eoeoeoeo') { isAdmin = true; sessionStorage.setItem('puretao_role', 'admin'); document.getElementById('id-overlay').style.display = 'none'; enableRoleMode('เจ้าของร้าน'); navTo('history-page'); }
         else if (p === 'pppp') { isStaff = true; sessionStorage.setItem('puretao_role', 'staff'); document.getElementById('id-overlay').style.display = 'none'; enableRoleMode('คนขาย');       navTo('history-page'); }
         else if (p !== null)   { alert("รหัสผ่านไม่ถูกต้อง"); }
     }
@@ -1505,8 +1565,8 @@
     }
 
     function updateShopUI() {
-        document.getElementById('ui-name').textContent          = db.shop.name;
-        document.getElementById('ui-sub').textContent           = db.shop.sub;
+        document.getElementById('ui-name').textContent           = db.shop.name;
+        document.getElementById('ui-sub').textContent            = db.shop.sub;
         document.getElementById('landing-shop-name').textContent = db.shop.name;
         document.getElementById('landing-shop-sub').textContent  = db.shop.sub;
         if (db.shop.logo) { document.getElementById('ui-logo').src = db.shop.logo; document.getElementById('landing-logo').src = db.shop.logo; }
@@ -1534,7 +1594,7 @@
     async function clearOrdersByDate() {
         if (!isAdmin) return;
         const filterDateVal = document.getElementById('manage-date-filter').value;
-        if (!filterDateVal) return alert('กรุณากดปุ่ม "รายละเอียด" ของวันที่ต้องการก่อน');
+        if (!filterDateVal) return alert('กรุณาเลือกวันที่จาก Date Picker ด้านบน');
         const targetDateStr = new Date(filterDateVal + 'T00:00:00').toLocaleDateString('th-TH');
         if (confirm(`ยืนยันการลบออเดอร์ทั้งหมดของวันที่ ${targetDateStr}?`)) {
             db.orders = db.orders.filter(o => o.date !== targetDateStr);
@@ -1547,7 +1607,19 @@
     }
 
     // =============================================
-    //  PURE-CANVAS CHART SYSTEM (no external CDN)
+    //  STOCK INPUT PANEL TOGGLE
+    // =============================================
+    function toggleStockInput() {
+        var body  = document.getElementById('stock-input-body');
+        var arrow = document.getElementById('stock-panel-arrow');
+        if (!body) return;
+        var isOpen = body.style.display !== 'none';
+        body.style.display  = isOpen ? 'none' : 'block';
+        arrow.textContent   = isOpen ? '▼' : '▲';
+    }
+
+    // =============================================
+    //  LINE CHART SYSTEM (revenue only)
     // =============================================
     var chartRange = 'week';
 
@@ -1555,16 +1627,14 @@
         chartRange = r;
         ['week','month','custom'].forEach(function(t){
             var b = document.getElementById('cr-'+t);
-            if (b) { b.classList.toggle('active', t===r); }
+            if (b) b.classList.toggle('active', t===r);
         });
         var cw = document.getElementById('cr-custom-wrap');
         if (cw) {
             if (r === 'custom') {
                 cw.classList.add('show');
-                var today = new Date();
-                var d7 = new Date(); d7.setDate(today.getDate()-6);
-                var si = document.getElementById('cr-start');
-                var ei = document.getElementById('cr-end');
+                var today = new Date(); var d7 = new Date(); d7.setDate(today.getDate()-6);
+                var si = document.getElementById('cr-start'); var ei = document.getElementById('cr-end');
                 if (si && !si.value) si.value = isoFromDate(d7);
                 if (ei && !ei.value) ei.value = isoFromDate(today);
             } else {
@@ -1589,159 +1659,288 @@
         return dates;
     }
 
-    function cLabel(iso) { var d=new Date(iso+'T00:00:00'); return d.getDate()+' '+thMonths[d.getMonth()]; }
+    function cLabel(iso) { var d=new Date(iso+'T00:00:00'); return d.getDate()+'/'+thMonths[d.getMonth()]; }
 
     function getRevForISO(iso) {
         var td=new Date(iso+'T00:00:00').toLocaleDateString('th-TH');
         return (db.orders||[]).filter(function(o){return o.date===td&&o.status==='เสร็จสิ้น';}).reduce(function(s,o){return s+o.total;},0);
     }
-    function getOrdForISO(iso) {
-        var td=new Date(iso+'T00:00:00').toLocaleDateString('th-TH');
-        return (db.orders||[]).filter(function(o){return o.date===td&&o.status==='เสร็จสิ้น';}).length;
-    }
-    function getSoldForISO(iso,item) {
-        if (snapshots[iso]&&snapshots[iso].sold&&snapshots[iso].sold[item]!==undefined) return snapshots[iso].sold[item];
-        var td=new Date(iso+'T00:00:00').toLocaleDateString('th-TH'); var sold=0;
-        (db.orders||[]).filter(function(o){return o.date===td&&o.status!=='ยกเลิก';}).forEach(function(o){
-            if(!o.raw_details)return;
+
+    function getSoldForISO(iso, item) {
+        if (snapshots[iso] && snapshots[iso].sold && snapshots[iso].sold[item] !== undefined) return snapshots[iso].sold[item];
+        var td = new Date(iso+'T00:00:00').toLocaleDateString('th-TH');
+        var sold = 0;
+        (db.orders||[]).filter(function(o){ return o.date===td && o.status!=='ยกเลิก'; }).forEach(function(o){
+            if (!o.raw_details) return;
             o.raw_details.forEach(function(bag){
-                var q=bag.qty||1;
-                if(item==='soy'&&bag.name.indexOf('น้ำเต้าหู้')>-1)     sold+=(bag.name.indexOf('400')>-1?400:300)*q;
-                if(item==='ginger'&&bag.name.indexOf('น้ำขิง')>-1)       sold+=(bag.name.indexOf('400')>-1?400:300)*q;
-                if(item==='sesame'&&bag.name.indexOf('ซุปงาดำ')>-1)      sold+=250*q;
-                if(item==='custard'&&bag.name.indexOf('สังขยา')>-1)      sold+=q;
-                if(item==='patongko'&&bag.name.indexOf('ปาท่องโก๋')>-1) sold+=q;
-                if(item==='mantou'&&bag.name.indexOf('หมั่นโถ')>-1)      sold+=q;
+                var q = bag.qty || 1;
+                if (item==='soy'      && bag.name.indexOf('น้ำเต้าหู้')>-1) sold += (bag.name.indexOf('400')>-1?400:300)*q;
+                if (item==='ginger'   && bag.name.indexOf('น้ำขิง')>-1)     sold += (bag.name.indexOf('400')>-1?400:300)*q;
+                if (item==='sesame'   && bag.name.indexOf('ซุปงาดำ')>-1)    sold += 250*q;
+                if (item==='custard'  && bag.name.indexOf('สังขยา')>-1)     sold += q;
+                if (item==='patongko' && bag.name.indexOf('ปาท่องโก๋')>-1)  sold += q;
+                if (item==='mantou'   && bag.name.indexOf('หมั่นโถ')>-1)    sold += q;
+                if (bag.toppings) bag.toppings.forEach(function(t){
+                    if (item==='jelly'      && t.indexOf('วุ้น')>-1)           sold += q;
+                    if (item==='basil'      && t.indexOf('เม็ดแมงลัก')>-1)    sold += q;
+                    if (item==='barley'     && t.indexOf('ลูกเดือย')>-1)      sold += q;
+                    if (item==='redbeans'   && t.indexOf('ถั่วแดง')>-1)       sold += q;
+                    if (item==='blackbeans' && t.indexOf('ถั่วดำ')>-1)        sold += q;
+                    if (item==='ginkgo'     && t.indexOf('แปะก๊วย')>-1)      sold += q;
+                    if (item==='grain6'     && t.indexOf('ธัญ')>-1)           sold += q;
+                    if (item==='tofu'       && t.indexOf('เต้าฮวย')>-1)      sold += q;
+                });
             });
         });
         return sold;
     }
 
+    function getStockForISO(iso, item) {
+        var todayISO = isoFromDate(new Date());
+        if (iso === todayISO) return db.stock[item] || 0;
+        if (snapshots[iso] && snapshots[iso].stock && snapshots[iso].stock[item] !== undefined) return snapshots[iso].stock[item];
+        return db.stock[item] || 0;
+    }
+
+    function setStockGroup(g) {
+        currentStockGroup = g;
+        [1,2,3].forEach(function(n){
+            var b = document.getElementById('gtab-'+n);
+            if (b) b.classList.toggle('active', n===g);
+        });
+        renderStockChart();
+    }
+
     function renderCharts() { renderRevenueChart(); renderStockChart(); }
 
-    /** วาดกราฟแท่งลงบน canvas ด้วย Canvas 2D API โดยตรง */
-    function drawBars(canvasId, datasets, labels, yFmt) {
+    // ========== REVENUE LINE CHART ==========
+    function renderRevenueChart() {
+        var dates  = getChartDates();
+        var labels = dates.map(cLabel);
+        if (dates.length === 0) { clearCanvas('c-revenue','📅 เลือกช่วงวันที่ แล้วกด "ดูกราฟ"'); return; }
+        var rev = dates.map(getRevForISO);
+        drawLineChart('c-revenue', labels,
+            [{ label:'ยอดขาย (฿)', data:rev, color:'#28a745', dashed:false }],
+            function(v){ return v>=1000 ? (v/1000).toFixed(1)+'k' : '฿'+v; }
+        );
+    }
+
+    // ========== STOCK GROUPED BAR CHART ==========
+    function renderStockChart() {
+        var dates  = getChartDates();
+        var labels = dates.map(cLabel);
+        if (dates.length === 0) { clearCanvas('c-stock','📅 เลือกช่วงวันที่ แล้วกด "ดูกราฟ"'); updateStockBarLegend([]); return; }
+
+        var group = currentStockGroup === 1 ? STOCK_GROUP_1
+                  : currentStockGroup === 2 ? STOCK_GROUP_2
+                  : STOCK_GROUP_3;
+
+        // Build datasets: for each item → cost bars + sold bars
+        var datasets = [];
+        group.forEach(function(item){
+            var costData = dates.map(function(iso){ return getStockForISO(iso, item.id); });
+            var soldData = dates.map(function(iso){ return getSoldForISO(iso, item.id); });
+            datasets.push({ label: item.label + ' ต้นทุน', data: costData, color: item.color, alpha: 0.85 });
+            datasets.push({ label: item.label + ' ขาย',    data: soldData, color: item.color, alpha: 0.35 });
+        });
+
+        drawGroupedBarChart('c-stock', labels, datasets, null);
+        updateStockBarLegend(group);
+    }
+
+    function updateStockBarLegend(group) {
+        var legend = document.getElementById('stock-bar-legend');
+        if (!legend) return;
+        if (group.length === 0) { legend.innerHTML = ''; return; }
+        legend.innerHTML = group.map(function(item){
+            return '<div class="legend-item">' +
+                '<span style="display:inline-block;width:12px;height:12px;background:' + item.color + ';border-radius:2px;opacity:0.85;flex-shrink:0;"></span>' +
+                '<span style="color:' + item.color + '; font-weight:700; font-size:10px;">' + item.label + '</span>' +
+                '<span style="color:#aaa; font-size:9px;">(ทึบ=ต้นทุน/จาง=ขาย)</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    /** วาดกราฟแท่งแบบ grouped (ต้นทุน+ขาย คู่กัน) */
+    function drawGroupedBarChart(canvasId, labels, datasets, yFmt) {
         var canvas = document.getElementById(canvasId);
         if (!canvas) return;
-        var W = canvas.parentElement.offsetWidth || 300;
-        var H = 200;
+        var W = canvas.parentElement.offsetWidth || 320;
+        var H = 220;
         canvas.width  = W;
         canvas.height = H;
         var ctx = canvas.getContext('2d');
 
-        var ML=46, MR=8, MT=28, MB=38;
-        var CW=W-ML-MR, CH=H-MT-MB;
+        var ML = 46, MR = 8, MT = 28, MB = 38;
+        var CW = W - ML - MR, CH = H - MT - MB;
+        ctx.clearRect(0, 0, W, H);
 
-        ctx.clearRect(0,0,W,H);
+        var allVals = datasets.reduce(function(a,ds){ return a.concat(ds.data); }, []);
+        var maxV    = Math.max.apply(null, allVals.concat([1]));
+        var niceMax = Math.ceil(maxV / 5) * 5;
+        if (niceMax === 0) niceMax = 10;
 
-        var allVals = datasets.reduce(function(a,ds){return a.concat(ds.data);},[]); 
-        var maxV = Math.max.apply(null, allVals.concat([1]));
-        var niceMax = Math.ceil(maxV/5)*5; if(niceMax===0) niceMax=10;
+        var n  = labels.length;
+        var nd = datasets.length;
+        if (n === 0) return;
 
-        // grid + y-labels
-        ctx.font = '9px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
-        for (var gi=0;gi<=5;gi++) {
-            var gy = MT + CH - (gi/5)*CH;
-            var gv = (gi/5)*niceMax;
-            ctx.strokeStyle='#efefef'; ctx.lineWidth=1;
-            ctx.beginPath(); ctx.moveTo(ML,gy); ctx.lineTo(ML+CW,gy); ctx.stroke();
-            ctx.fillStyle='#aaa';
-            ctx.fillText(yFmt ? yFmt(gv) : (gv>=1000?(gv/1000).toFixed(1)+'k':Math.round(gv)), ML-4, gy);
+        // Grid + Y labels
+        ctx.font = '9px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+        for (var gi = 0; gi <= 5; gi++) {
+            var gy = MT + CH - (gi / 5) * CH;
+            var gv = (gi / 5) * niceMax;
+            ctx.strokeStyle = '#efefef'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(ML, gy); ctx.lineTo(ML + CW, gy); ctx.stroke();
+            ctx.fillStyle = '#aaa';
+            ctx.fillText(yFmt ? yFmt(gv) : (gv >= 1000 ? (gv/1000).toFixed(1)+'k' : Math.round(gv)), ML - 4, gy);
         }
-        // x-axis line
-        ctx.strokeStyle='#ddd'; ctx.lineWidth=1.5;
-        ctx.beginPath(); ctx.moveTo(ML,MT+CH); ctx.lineTo(ML+CW,MT+CH); ctx.stroke();
+        // X-axis
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(ML, MT + CH); ctx.lineTo(ML + CW, MT + CH); ctx.stroke();
 
-        // bars
-        var n=labels.length; var nd=datasets.length;
-        var groupW=CW/n; var barPad=groupW<20?1:3;
-        var barW=Math.max(2,(groupW-barPad*2)/nd-1);
+        var groupW  = CW / n;
+        var padding = Math.max(2, groupW * 0.08);
+        var barW    = Math.max(2, (groupW - padding * 2) / nd - 1);
 
-        datasets.forEach(function(ds,di){
-            ds.data.forEach(function(val,i){
-                var x=ML+i*groupW+barPad+di*(barW+1);
-                var bh=Math.max(0,(val/niceMax)*CH);
-                var by=MT+CH-bh;
-                ctx.fillStyle=ds.color;
-                // rounded top corners
-                var r=Math.min(3,barW/2,bh/2);
+        datasets.forEach(function(ds, di) {
+            ds.data.forEach(function(val, i) {
+                var x  = ML + i * groupW + padding + di * (barW + 1);
+                var bh = Math.max(0, (val / niceMax) * CH);
+                var by = MT + CH - bh;
+                // Parse color and apply alpha
+                ctx.globalAlpha = ds.alpha || 0.85;
+                ctx.fillStyle   = ds.color;
+                // Rounded top
+                var r = Math.min(3, barW / 2, bh / 2);
                 ctx.beginPath();
-                if(bh>0){
-                    ctx.moveTo(x+r,by); ctx.lineTo(x+barW-r,by);
-                    ctx.arcTo(x+barW,by,x+barW,by+r,r);
-                    ctx.lineTo(x+barW,by+bh); ctx.lineTo(x,by+bh);
-                    ctx.lineTo(x,by+r); ctx.arcTo(x,by,x+r,by,r);
-                    ctx.closePath(); ctx.fill();
+                if (bh > 0) {
+                    ctx.moveTo(x + r, by);
+                    ctx.lineTo(x + barW - r, by);
+                    ctx.arcTo(x + barW, by, x + barW, by + r, r);
+                    ctx.lineTo(x + barW, by + bh);
+                    ctx.lineTo(x, by + bh);
+                    ctx.lineTo(x, by + r);
+                    ctx.arcTo(x, by, x + r, by, r);
+                    ctx.closePath();
+                    ctx.fill();
                 }
             });
         });
+        ctx.globalAlpha = 1;
 
-        // x labels
-        ctx.fillStyle='#888'; ctx.font='9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-        labels.forEach(function(lbl,i){
-            var x=ML+i*groupW+groupW/2;
-            ctx.save(); ctx.translate(x,MT+CH+4);
-            if(n>14){ctx.rotate(-Math.PI/4); ctx.textAlign='right';}
-            ctx.fillText(lbl,0,0);
+        // X labels
+        ctx.fillStyle = '#888'; ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        labels.forEach(function(lbl, i) {
+            var x = ML + i * groupW + groupW / 2;
+            ctx.save();
+            ctx.translate(x, MT + CH + 4);
+            if (n > 14) { ctx.rotate(-Math.PI / 4); ctx.textAlign = 'right'; }
+            ctx.fillText(lbl, 0, 0);
             ctx.restore();
         });
+    }
 
-        // legend (if multiple datasets)
-        if(nd>1){
-            ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.font='10px sans-serif';
-            var lx=ML;
-            datasets.forEach(function(ds){
-                ctx.fillStyle=ds.color; ctx.fillRect(lx,8,10,9);
-                ctx.fillStyle='#555'; ctx.fillText(ds.label,lx+13,12);
-                lx+=ctx.measureText(ds.label).width+28;
-            });
+    // ========== CORE LINE CHART RENDERER ==========
+    function drawLineChart(canvasId, labels, datasets, yFmt) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var W = canvas.parentElement.offsetWidth || 320;
+        var H = 220;
+        canvas.width  = W;
+        canvas.height = H;
+        var ctx = canvas.getContext('2d');
+
+        var ML = 46, MR = 10, MT = 32, MB = 38;
+        var CW = W - ML - MR, CH = H - MT - MB;
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Max value
+        var allVals = datasets.reduce(function(a,ds){ return a.concat(ds.data); }, []);
+        var maxV    = Math.max.apply(null, allVals.concat([1]));
+        var niceMax = Math.ceil(maxV / 5) * 5;
+        if (niceMax === 0) niceMax = 10;
+
+        var n = labels.length;
+        if (n === 0) return;
+
+        // Grid lines + Y labels
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (var gi = 0; gi <= 5; gi++) {
+            var gy = MT + CH - (gi / 5) * CH;
+            var gv = (gi / 5) * niceMax;
+            ctx.strokeStyle = '#efefef'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(ML, gy); ctx.lineTo(ML + CW, gy); ctx.stroke();
+            ctx.fillStyle = '#aaa';
+            ctx.fillText(yFmt ? yFmt(gv) : (gv >= 1000 ? (gv/1000).toFixed(1)+'k' : Math.round(gv)), ML - 4, gy);
         }
-    }
 
-    function renderRevenueChart() {
-        var dates  = getChartDates();
-        var labels = dates.map(cLabel);
-        var rev    = dates.map(getRevForISO);
-        var ords   = dates.map(getOrdForISO);
-        if (dates.length === 0) { clearCanvas('c-revenue','📅 เลือกช่วงวันที่ แล้วกด "ดูกราฟ"'); return; }
-        drawBars('c-revenue',
-            [{ label:'ยอดขาย (฿)', data:rev, color:'rgba(40,167,69,0.82)' }],
-            labels,
-            function(v){ return v>=1000?(v/1000).toFixed(1)+'k':'฿'+v; }
-        );
-    }
+        // X-axis line
+        ctx.strokeStyle = '#ddd'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(ML, MT + CH); ctx.lineTo(ML + CW, MT + CH); ctx.stroke();
 
-    function renderStockChart() {
-        var sel  = document.getElementById('cr-stock-item');
-        var item = sel ? sel.value : 'soy';
-        var dates = getChartDates();
-        var labels = dates.map(cLabel);
-        if (dates.length === 0) { clearCanvas('c-stock','📅 เลือกช่วงวันที่ แล้วกด "ดูกราฟ"'); return; }
-        var todayISO = isoFromDate(new Date());
-        var cost = dates.map(function(iso){
-            if (iso === todayISO) return db.stock[item] || 0;
-            return (snapshots[iso]&&snapshots[iso].stock&&snapshots[iso].stock[item]!==undefined) ? snapshots[iso].stock[item] : (db.stock[item]||0);
+        // X step
+        var step = n > 1 ? CW / (n - 1) : CW;
+
+        // Draw each dataset
+        datasets.forEach(function(ds) {
+            if (ds.data.every(function(v){ return v === 0; })) return; // skip all-zero lines
+
+            ctx.beginPath();
+            ctx.strokeStyle = ds.color;
+            ctx.lineWidth   = 1.8;
+            if (ds.dashed) ctx.setLineDash([5, 4]);
+            else           ctx.setLineDash([]);
+
+            var started = false;
+            ds.data.forEach(function(val, i) {
+                var x = ML + i * (n > 1 ? CW / (n - 1) : 0);
+                var y = MT + CH - (val / niceMax) * CH;
+                if (!started) { ctx.moveTo(x, y); started = true; }
+                else          { ctx.lineTo(x, y); }
+            });
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Dots
+            ds.data.forEach(function(val, i) {
+                if (val === 0) return;
+                var x = ML + i * (n > 1 ? CW / (n - 1) : 0);
+                var y = MT + CH - (val / niceMax) * CH;
+                ctx.beginPath();
+                ctx.arc(x, y, ds.dashed ? 2 : 2.5, 0, Math.PI * 2);
+                ctx.fillStyle = ds.color;
+                ctx.fill();
+            });
         });
-        var sold = dates.map(function(iso){ return getSoldForISO(iso,item); });
-        drawBars('c-stock',
-            [{ label:'ต้นทุน', data:cost, color:'rgba(212,175,55,0.85)' },
-             { label:'ขายไป', data:sold, color:'rgba(220,53,69,0.80)' }],
-            labels, null
-        );
+
+        // X labels
+        ctx.fillStyle = '#888'; ctx.font = '9px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        labels.forEach(function(lbl, i) {
+            var x = ML + i * (n > 1 ? CW / (n - 1) : 0);
+            ctx.save();
+            ctx.translate(x, MT + CH + 4);
+            if (n > 14) { ctx.rotate(-Math.PI / 5); ctx.textAlign = 'right'; }
+            ctx.fillText(lbl, 0, 0);
+            ctx.restore();
+        });
     }
 
     function clearCanvas(id, msg) {
-        var canvas = document.getElementById(id); if(!canvas) return;
-        var W=canvas.parentElement.offsetWidth||300; var H=200;
-        canvas.width=W; canvas.height=H;
-        var ctx=canvas.getContext('2d');
-        ctx.clearRect(0,0,W,H);
-        ctx.fillStyle='#ccc'; ctx.font='13px sans-serif';
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(msg,W/2,H/2);
+        var canvas = document.getElementById(id); if (!canvas) return;
+        var W = canvas.parentElement.offsetWidth || 300; var H = 220;
+        canvas.width = W; canvas.height = H;
+        var ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#ccc'; ctx.font = '13px sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(msg, W/2, H/2);
     }
 
 </script>
 </body>
 </html>
-        
