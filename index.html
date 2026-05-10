@@ -585,7 +585,7 @@
     // =============================================
     //  INIT
     // =============================================
-    window.onload = async () => {
+    async function startApp() {
         userId = localStorage.getItem('puretao_user_id') || ("ID-" + Date.now());
         localStorage.setItem('puretao_user_id', userId);
         await loadDB();
@@ -810,10 +810,10 @@
         document.getElementById('cloud-status').textContent = "Sync: Loading...";
         try {
             const [cR, oR, sR, snR] = await Promise.all([
-                fetch(CONTENT_URL   + "?t=" + Date.now()),
-                fetch(ORDERS_URL    + "?t=" + Date.now()),
-                fetch(STOCK_URL     + "?t=" + Date.now()),
-                fetch(SNAPSHOTS_URL + "?t=" + Date.now())
+                firebaseFetch(CONTENT_URL   + "?t=" + Date.now()),
+                firebaseFetch(ORDERS_URL    + "?t=" + Date.now()),
+                firebaseFetch(STOCK_URL     + "?t=" + Date.now()),
+                firebaseFetch(SNAPSHOTS_URL + "?t=" + Date.now())
             ]);
             const cD = await cR.json(), oD = await oR.json(), sD = await sR.json(), snD = await snR.json();
             if (cD) { db.shop = cD.shop || db.shop; db.menus = cD.menus || []; db.menus.sort((a,b) => (a.order||0)-(b.order||0)); }
@@ -837,7 +837,7 @@
         if (!isInitialLoadDone) return;
         document.getElementById('cloud-status').textContent = "Sync: Saving...";
         try {
-            await fetch(CONTENT_URL, { method:'PUT', body: JSON.stringify({ shop: db.shop, menus: db.menus }) });
+            await firebaseFetch(CONTENT_URL, { method:'PUT', body: JSON.stringify({ shop: db.shop, menus: db.menus }) });
             saveLocal();
             document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
         } catch (e) { document.getElementById('cloud-status').textContent = "Sync: Local Only 💾"; }
@@ -847,7 +847,7 @@
         if (!isInitialLoadDone) return;
         document.getElementById('cloud-status').textContent = "Sync: Updating Orders...";
         try {
-            await fetch(ORDERS_URL, { method:'PUT', body: JSON.stringify(db.orders) });
+            await firebaseFetch(ORDERS_URL, { method:'PUT', body: JSON.stringify(db.orders) });
             saveLocal();
             document.getElementById('cloud-status').textContent = "Sync: Saved ✅";
         } catch (e) { document.getElementById('cloud-status').textContent = "Sync: Local Only 💾"; }
@@ -904,7 +904,7 @@
         const snap = calcDaySnapshot(isoDate, trigger);
         snapshots[isoDate] = snap;
         try {
-            await fetch(SNAPSHOTS_URL, { method:'PATCH', body: JSON.stringify({ [isoDate]: snap }) });
+            await firebaseFetch(SNAPSHOTS_URL, { method:'PATCH', body: JSON.stringify({ [isoDate]: snap }) });
             saveLocal();
         } catch(e) { saveLocal(); }
     }
@@ -967,7 +967,7 @@
         db.stock.tofu       = parseInt(document.getElementById('stock-tofu').value)       || 0;
 
         try {
-            await fetch(STOCK_URL, { method:'PUT', body: JSON.stringify(db.stock) });
+            await firebaseFetch(STOCK_URL, { method:'PUT', body: JSON.stringify(db.stock) });
             saveLocal();
             const todayKey = isoFromDate(new Date());
             if (snapshots[todayKey]) snapshots[todayKey].stock = Object.assign({}, db.stock);
@@ -1942,5 +1942,107 @@
     }
 
 </script>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getAuth,
+  signInAnonymously,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA4zYaySi7OqxKBzMCzFGVOBrz2RUM7qTY",
+  authDomain: "puretaoshop.firebaseapp.com",
+  databaseURL: "https://puretaoshop-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "puretaoshop",
+  storageBucket: "puretaoshop.firebasestorage.app",
+  messagingSenderId: "549375720527",
+  appId: "1:549375720527:web:a43ff23e964e8b55ad3e3a",
+  measurementId: "G-B6FH54PY09"
+};
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+window.firebaseToken = "";
+
+// LOGIN
+signInAnonymously(auth)
+
+.then(() => {
+
+  console.log("Firebase Login Success");
+
+})
+
+.catch((err) => {
+
+  console.error(err);
+
+  alert("Firebase Login Error");
+
+});
+
+// WAIT LOGIN
+onAuthStateChanged(auth, async(user) => {
+
+  if(user){
+
+    window.firebaseToken =
+      await user.getIdToken();
+
+    console.log("Firebase Ready");
+
+    // START SYSTEM
+    startApp();
+
+  }
+
+});
+
+// FETCH WITH TOKEN
+async function firebaseFetch(
+  url,
+  options = {}
+){
+
+  if(!window.firebaseToken){
+
+    throw new Error("No Firebase Token");
+
+  }
+
+  const separator =
+    url.includes("?") ? "&" : "?";
+
+  const finalUrl =
+    `${url}${separator}auth=${window.firebaseToken}`;
+
+  return fetch(finalUrl, {
+
+    ...options,
+
+    headers: {
+
+      "Content-Type": "application/json",
+
+      ...(options.headers || {})
+
+    }
+
+  });
+
+}
+
+window.firebaseFetch = firebaseFetch;
+
+window.onload = () => {};
+
+</script>
+
 </body>
 </html>
