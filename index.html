@@ -1535,7 +1535,7 @@
 
     function enterAsStaffOrAdmin() {
         let p = prompt("รหัสผ่าน:");
-        if      (p === 'eoeoeoeo') { isAdmin = true; sessionStorage.setItem('puretao_role', 'admin'); document.getElementById('id-overlay').style.display = 'none'; enableRoleMode('เจ้าของร้าน'); navTo('history-page'); }
+        if      (p === '3o3o3o3o') { isAdmin = true; sessionStorage.setItem('puretao_role', 'admin'); document.getElementById('id-overlay').style.display = 'none'; enableRoleMode('เจ้าของร้าน'); navTo('history-page'); }
         else if (p === 'pppp') { isStaff = true; sessionStorage.setItem('puretao_role', 'staff'); document.getElementById('id-overlay').style.display = 'none'; enableRoleMode('คนขาย');       navTo('history-page'); }
         else if (p !== null)   { alert("รหัสผ่านไม่ถูกต้อง"); }
     }
