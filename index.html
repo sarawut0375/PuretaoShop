@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Puretao V8.7 - Stock System</title>
+    <title>Puretao v9.0 - Stock System</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #D4AF37; --dark: #2D1400; --cream: #FAF7F2; --white: #FFFFFF; --border: #E8D5C4; --secondary: #8B4513; --success: #28a745; --pending: #ffc107; --danger: #dc3545; }
@@ -817,20 +817,22 @@
             ]);
             const cD = await cR.json(), oD = await oR.json(), sD = await sR.json(), snD = await snR.json();
             if (cD) { db.shop = cD.shop || db.shop; db.menus = cD.menus || []; db.menus.sort((a,b) => (a.order||0)-(b.order||0)); }
-            db.orders = oD || [];
+            db.orders = Object.values(oD || {})
+  .filter(order => order != null)
+  .sort((a,b)=>(a.created||0)-(b.created||0));
             // Merge fetched stock with defaults (to include new group3 fields)
             if (sD) db.stock = Object.assign({}, db.stock, sD);
             snapshots = snD || {};
             document.getElementById('cloud-status').textContent = "Sync: Connected ✅";
         } catch (e) {
             document.getElementById('cloud-status').textContent = "Sync: Offline ⚠️";
-            const local = localStorage.getItem('puretao_v8.7_db');
+            const local = localStorage.getItem('puretao_v9.0_db');
             if (local) { const p = JSON.parse(local); db = p.db || db; snapshots = p.snapshots || {}; }
         }
     }
 
     function saveLocal() {
-        localStorage.setItem('puretao_v8.7_db', JSON.stringify({ db, snapshots }));
+        localStorage.setItem('puretao_v9.0_db', JSON.stringify({ db, snapshots }));
     }
 
     async function saveContent() {
